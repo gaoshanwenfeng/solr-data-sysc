@@ -50,7 +50,7 @@ public class HotelQueryBuilder {
         }
 
         if (StringUtils.hasText(query.getCity())) {
-            solrQuery.addFilterQuery("city:" + ClientUtils.escapeQueryChars(query.getCity().trim()));
+            solrQuery.addFilterQuery("city_name:" + ClientUtils.escapeQueryChars(query.getCity().trim()));
         }
         if (query.getStar() != null) {
             solrQuery.addFilterQuery("star:" + query.getStar());

@@ -74,6 +74,9 @@ public class HotelBaseRecord {
     @JsonProperty("city_id")
     private String cityId;
 
+    @JsonProperty("city_name")
+    private String cityName;
+
     @JsonProperty("city_id2")
     private String cityId2;
 

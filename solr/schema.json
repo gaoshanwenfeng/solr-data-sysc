@@ -48,7 +48,17 @@
   },
   {
     "add-field": {
-      "name": "city",
+      "name": "city_id",
+      "type": "string",
+      "indexed": true,
+      "stored": true,
+      "multiValued": false,
+      "docValues": true
+    }
+  },
+  {
+    "add-field": {
+      "name": "city_name",
       "type": "string",
       "indexed": true,
       "stored": true,

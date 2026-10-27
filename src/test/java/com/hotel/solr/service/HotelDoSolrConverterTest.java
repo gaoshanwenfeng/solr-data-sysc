@@ -26,7 +26,8 @@ class HotelDoSolrConverterTest {
                 .id("h-1")
                 .name("上海外滩酒店")
                 .address("中山东一路1号")
-                .city("上海")
+                .cityId("1901")
+                .cityName("上海")
                 .longitude(new BigDecimal("121.473701"))
                 .latitude(new BigDecimal("31.230416"))
                 .star(5)
@@ -43,7 +44,8 @@ class HotelDoSolrConverterTest {
         assertThat(doc.getFieldValue("id")).isEqualTo("h-1");
         assertThat(doc.getFieldValue("name")).isEqualTo("上海外滩酒店");
         assertThat(doc.getFieldValue("address")).isEqualTo("中山东一路1号");
-        assertThat(doc.getFieldValue("city")).isEqualTo("上海");
+        assertThat(doc.getFieldValue("city_id")).isEqualTo("1901");
+        assertThat(doc.getFieldValue("city_name")).isEqualTo("上海");
         assertThat(doc.getFieldValue("longitude")).isEqualTo(121.473701d);
         assertThat(doc.getFieldValue("latitude")).isEqualTo(31.230416d);
         assertThat(doc.getFieldValue("star")).isEqualTo(5);
@@ -62,7 +64,8 @@ class HotelDoSolrConverterTest {
         SolrInputDocument doc = converter.toDocument(hotelDo);
 
         assertThat(doc.getFieldValue("address")).isNull();
-        assertThat(doc.getFieldValue("city")).isNull();
+        assertThat(doc.getFieldValue("city_id")).isNull();
+        assertThat(doc.getFieldValue("city_name")).isNull();
         assertThat(doc.getFieldValue("longitude")).isNull();
         assertThat(doc.getFieldValue("latitude")).isNull();
         assertThat(doc.getFieldValue("star")).isNull();
@@ -78,7 +81,8 @@ class HotelDoSolrConverterTest {
         doc.setField("id", "h-1");
         doc.setField("name", "上海外滩酒店");
         doc.setField("address", "中山东一路1号");
-        doc.setField("city", "上海");
+        doc.setField("city_id", "1901");
+        doc.setField("city_name", "上海");
         doc.setField("longitude", 121.473701d);
         doc.setField("latitude", 31.230416d);
         doc.setField("star", 5);
@@ -95,7 +99,8 @@ class HotelDoSolrConverterTest {
         assertThat(hotelDo.getId()).isEqualTo("h-1");
         assertThat(hotelDo.getName()).isEqualTo("上海外滩酒店");
         assertThat(hotelDo.getAddress()).isEqualTo("中山东一路1号");
-        assertThat(hotelDo.getCity()).isEqualTo("上海");
+        assertThat(hotelDo.getCityId()).isEqualTo("1901");
+        assertThat(hotelDo.getCityName()).isEqualTo("上海");
         assertThat(hotelDo.getLongitude()).isEqualByComparingTo("121.473701");
         assertThat(hotelDo.getLatitude()).isEqualByComparingTo("31.230416");
         assertThat(hotelDo.getLongitude().scale()).isEqualTo(6);

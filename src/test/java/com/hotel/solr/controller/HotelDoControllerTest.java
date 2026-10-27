@@ -64,7 +64,7 @@ class HotelDoControllerTest {
 
     @Test
     void createReturns201AndSnakeCaseFields() throws Exception {
-        when(hotelService.save(any(HotelDo.class))).thenAnswer(invocation -> {
+        when(hotelService.create(any(HotelDo.class))).thenAnswer(invocation -> {
             HotelDo hotelDo = invocation.getArgument(0);
             hotelDo.setCreateTime(Instant.parse("2026-10-27T00:00:00Z"));
             hotelDo.setUpdateTime(Instant.parse("2026-10-27T00:00:00Z"));
@@ -73,7 +73,8 @@ class HotelDoControllerTest {
 
         mockMvc.perform(post("/api/hotels")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\":\"h1\",\"name\":\"外滩酒店\",\"city\":\"上海\",\"star\":5,"
+                        .content("{\"id\":\"h1\",\"name\":\"外滩酒店\",\"city_id\":\"1901\","
+                                + "\"city_name\":\"上海\",\"star\":5,"
                                 + "\"price\":1299.5,\"tags\":[\"江景\"],"
                                 + "\"rate_plan_prices\":\"[]\",\"rate_plan_room_sts\":\"{}\"}"))
                 .andExpect(status().isCreated())
@@ -84,14 +85,14 @@ class HotelDoControllerTest {
                 .andExpect(jsonPath("$.data.create_time").value("2026-10-27T00:00:00Z"));
 
         ArgumentCaptor<HotelDo> captor = ArgumentCaptor.forClass(HotelDo.class);
-        verify(hotelService).save(captor.capture());
+        verify(hotelService).create(captor.capture());
         assertThat(captor.getValue().getRatePlanPrices()).isEqualTo("[]");
         assertThat(captor.getValue().getRatePlanRoomSts()).isEqualTo("{}");
     }
 
     @Test
     void createBindsCoordinatesWithSixDecimals() throws Exception {
-        when(hotelService.save(any(HotelDo.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(hotelService.create(any(HotelDo.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         mockMvc.perform(post("/api/hotels")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -102,7 +103,7 @@ class HotelDoControllerTest {
                 .andExpect(jsonPath("$.data.latitude").value(31.230416));
 
         ArgumentCaptor<HotelDo> captor = ArgumentCaptor.forClass(HotelDo.class);
-        verify(hotelService).save(captor.capture());
+        verify(hotelService).create(captor.capture());
         HotelDo captured = captor.getValue();
         assertThat(captured.getLongitude()).isEqualByComparingTo("121.473701");
         assertThat(captured.getLatitude()).isEqualByComparingTo("31.230416");
@@ -112,7 +113,7 @@ class HotelDoControllerTest {
 
     @Test
     void createBindsCoordinatesWithTrailingZeros() throws Exception {
-        when(hotelService.save(any(HotelDo.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(hotelService.create(any(HotelDo.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         mockMvc.perform(post("/api/hotels")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -121,7 +122,7 @@ class HotelDoControllerTest {
                 .andExpect(status().isCreated());
 
         ArgumentCaptor<HotelDo> captor = ArgumentCaptor.forClass(HotelDo.class);
-        verify(hotelService).save(captor.capture());
+        verify(hotelService).create(captor.capture());
         assertThat(captor.getValue().getLongitude()).isEqualByComparingTo("121.4737");
         assertThat(captor.getValue().getLatitude()).isEqualByComparingTo("31.2304");
         assertThat(captor.getValue().getLongitude().scale()).isEqualTo(6);
@@ -138,7 +139,7 @@ class HotelDoControllerTest {
                 .andExpect(jsonPath("$.code").value(400))
                 .andExpect(jsonPath("$.message").value(containsString("longitude")));
 
-        verify(hotelService, never()).save(any(HotelDo.class));
+        verify(hotelService, never()).create(any(HotelDo.class));
     }
 
     @Test
@@ -150,7 +151,7 @@ class HotelDoControllerTest {
                 .andExpect(jsonPath("$.code").value(400))
                 .andExpect(jsonPath("$.message").value(containsString("name")));
 
-        verify(hotelService, never()).save(any(HotelDo.class));
+        verify(hotelService, never()).create(any(HotelDo.class));
     }
 
     @Test

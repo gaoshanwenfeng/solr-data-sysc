@@ -6,7 +6,7 @@ import lombok.Data;
 import java.util.List;
 
 /**
- * doc/hotel-data/基础数据.json 的根结构。
+ * classpath 根目录 dih-hotel-rp.json 的根结构。
  * @author gaofeng
  */
 @Data

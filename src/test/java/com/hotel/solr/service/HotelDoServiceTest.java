@@ -60,7 +60,7 @@ class HotelDoServiceTest {
     void saveStoresDocumentAndCommits() throws Exception {
         HotelDo hotelDo = HotelDo.builder().id("h1").name("外滩酒店").build();
 
-        HotelDo saved = service.save(hotelDo);
+        HotelDo saved = service.create(hotelDo);
 
         ArgumentCaptor<SolrInputDocument> captor = ArgumentCaptor.forClass(SolrInputDocument.class);
         verify(solrClient).add(captor.capture());
@@ -73,7 +73,7 @@ class HotelDoServiceTest {
 
     @Test
     void saveRejectsBlankId() {
-        assertThatThrownBy(() -> service.save(HotelDo.builder().name("没有 id").build()))
+        assertThatThrownBy(() -> service.create(HotelDo.builder().name("没有 id").build()))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("id")
                 .hasFieldOrPropertyWithValue("status", 400);
@@ -81,7 +81,7 @@ class HotelDoServiceTest {
 
     @Test
     void saveRejectsBlankName() {
-        assertThatThrownBy(() -> service.save(HotelDo.builder().id("h1").build()))
+        assertThatThrownBy(() -> service.create(HotelDo.builder().id("h1").build()))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("name")
                 .hasFieldOrPropertyWithValue("status", 400);
@@ -92,7 +92,7 @@ class HotelDoServiceTest {
         doThrow(new IOException("connection refused"))
                 .when(solrClient).add(any(SolrInputDocument.class));
 
-        assertThatThrownBy(() -> service.save(HotelDo.builder().id("h1").name("酒店").build()))
+        assertThatThrownBy(() -> service.create(HotelDo.builder().id("h1").name("酒店").build()))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("Solr")
                 .hasFieldOrPropertyWithValue("status", 502);
@@ -102,7 +102,7 @@ class HotelDoServiceTest {
     void saveDoesNotCommitWhenCommitAfterWriteIsDisabled() throws Exception {
         properties.setCommitAfterWrite(false);
 
-        service.save(HotelDo.builder().id("h1").name("酒店").build());
+        service.create(HotelDo.builder().id("h1").name("酒店").build());
 
         verify(solrClient, never()).commit();
     }
@@ -116,7 +116,7 @@ class HotelDoServiceTest {
                 .latitude(new BigDecimal("31.230416"))
                 .build();
 
-        HotelDo saved = service.save(hotelDo);
+        HotelDo saved = service.create(hotelDo);
 
         ArgumentCaptor<SolrInputDocument> captor = ArgumentCaptor.forClass(SolrInputDocument.class);
         verify(solrClient).add(captor.capture());
@@ -135,7 +135,7 @@ class HotelDoServiceTest {
                 .latitude(new BigDecimal("31.2304"))
                 .build();
 
-        assertThatThrownBy(() -> service.save(hotelDo))
+        assertThatThrownBy(() -> service.create(hotelDo))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("6")
                 .hasFieldOrPropertyWithValue("status", 400);
@@ -150,7 +150,7 @@ class HotelDoServiceTest {
                 .longitude(new BigDecimal("121.473701"))
                 .build();
 
-        assertThatThrownBy(() -> service.save(hotelDo))
+        assertThatThrownBy(() -> service.create(hotelDo))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("同时")
                 .hasFieldOrPropertyWithValue("status", 400);
@@ -165,7 +165,7 @@ class HotelDoServiceTest {
                 .latitude(new BigDecimal("31.230416"))
                 .build();
 
-        assertThatThrownBy(() -> service.save(hotelDo))
+        assertThatThrownBy(() -> service.create(hotelDo))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("longitude")
                 .hasFieldOrPropertyWithValue("status", 400);
@@ -180,7 +180,7 @@ class HotelDoServiceTest {
                 .latitude(new BigDecimal("-90.000001"))
                 .build();
 
-        assertThatThrownBy(() -> service.save(hotelDo))
+        assertThatThrownBy(() -> service.create(hotelDo))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining("latitude")
                 .hasFieldOrPropertyWithValue("status", 400);
@@ -396,7 +396,8 @@ class HotelDoServiceTest {
         SolrDocument doc = new SolrDocument();
         doc.setField("id", id);
         doc.setField("name", "酒店" + id);
-        doc.setField("city", "上海");
+        doc.setField("city_id", "1901");
+        doc.setField("city_name", "上海");
         doc.setField("star", 5);
         doc.setField("price", 100.0f);
         doc.setField("create_time", Date.from(Instant.parse("2026-10-01T00:00:00Z")));

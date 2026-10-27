@@ -45,7 +45,7 @@ class HotelDoQueryBuilderTest {
                 .build());
 
         assertThat(query.getFilterQueries()).containsExactly(
-                "city:上海",
+                "city_name:上海",
                 "star:5",
                 "price:[100.0 TO 500.0]",
                 "(tags:江景 OR tags:豪华)");
@@ -67,7 +67,7 @@ class HotelDoQueryBuilderTest {
                 .build());
 
         assertThat(query.getFilterQueries())
-                .containsExactly("city:上海\\+浦东", "(tags:a\\ b)");
+                .containsExactly("city_name:上海\\+浦东", "(tags:a\\ b)");
     }
 
     @Test

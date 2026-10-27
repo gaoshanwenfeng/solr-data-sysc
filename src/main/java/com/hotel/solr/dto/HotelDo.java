@@ -28,13 +28,17 @@ public class HotelDo {
      * 唯一键，新增时必填（由 Service 校验）
      */
     private String id;
+    private String hotelId;
+    private String ratePlanId;
 
     @NotBlank(message = "name 不能为空")
     private String name;
 
     private String address;
 
-    private String city;
+    private String cityId;
+    private String cityName;
+
 
     /**
      * 经度，范围 [-180, 180]，小数点后至少 6 位（由 Service 校验精度）
@@ -60,12 +64,12 @@ public class HotelDo {
     private List<String> tags;
 
     /**
-     * 价格计划，JSON 字符串，仅存储不索引
+     * 价格计划，{@code RpByteUtils} 编码后的紧凑字符串，仅存储不索引
      */
     private String ratePlanPrices;
 
     /**
-     * 房型房态，JSON 字符串，仅存储不索引
+     * 房型房态，{@code RpByteUtils} 编码后的紧凑字符串，仅存储不索引
      */
     private String ratePlanRoomSts;
 

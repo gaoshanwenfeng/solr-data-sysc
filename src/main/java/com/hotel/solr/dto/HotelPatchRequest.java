@@ -21,7 +21,8 @@ public class HotelPatchRequest {
 
     private String address;
 
-    private String city;
+    private String cityId;
+    private String cityName;
 
     @DecimalMin(value = "-180", message = "longitude 不能小于 -180")
     @DecimalMax(value = "180", message = "longitude 不能大于 180")

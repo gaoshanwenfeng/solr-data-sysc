@@ -1,11 +1,11 @@
 package com.hotel.solr.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hotel.solr.dto.HotelInfoDataJsonSet;
 import com.hotel.solr.dto.HotelBaseRecord;
 import com.hotel.solr.dto.HotelDo;
 import com.hotel.solr.dto.RatePlanData;
+import com.hotel.solr.util.RpByteUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -14,30 +14,31 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
- * 只读加载 doc/hotel-data/基础数据.json，并把源记录转换为 {@link HotelDo}。
+ * 只读加载 classpath 根目录下的 dih-hotel-rp.json，并把源记录转换为 {@link HotelDo}。
  *
  * <p>源文件只通过输入流读取，不会写入或修改。转换规则：</p>
  * <ul>
- *   <li>hotel_name / address / city_id 分别映射到 name / address / city；</li>
+ *   <li>hotel_name / address / city_id / city_name 分别映射到 name / address / cityId / cityName；</li>
  *   <li>坐标优先使用 google_lat/google_lon，整对无效时回退 baidu_lat/baidu_lon，
  *       两对都无效则留空；</li>
  *   <li>star_rate 转换为星级；</li>
- *   <li>rp_prices / rp_room_sts 原样序列化为 JSON 字符串；</li>
+ *   <li>rp_prices / rp_room_sts 使用 {@link RpByteUtils} 编码为紧凑字符串；</li>
  *   <li>其余字段保留在 {@link HotelBaseRecord} 中，不写入 HotelDo。</li>
  * </ul>
+ * @author gaofeng
  */
 @Component
 @RequiredArgsConstructor
 public class HotelBaseDataLoader {
 
-    public static final String DEFAULT_FILE = "doc/hotel-data/基础数据.json";
+    public static final String DEFAULT_FILE = "dih-hotel-rp.json";
 
     private static final BigDecimal MIN_LONGITUDE = new BigDecimal("-180");
     private static final BigDecimal MAX_LONGITUDE = new BigDecimal("180");
@@ -49,10 +50,26 @@ public class HotelBaseDataLoader {
     private final ObjectMapper objectMapper;
 
     /**
-     * 读取默认路径下的基础数据，仅解析原始记录。
+     * 读取 classpath 默认资源中的基础数据，仅解析原始记录。
      */
     public List<HotelBaseRecord> readDefault() {
-        return read(Paths.get(DEFAULT_FILE));
+        return readClasspath(DEFAULT_FILE);
+    }
+
+    /**
+     * 读取 classpath 中指定资源，仅解析原始记录。
+     */
+    public List<HotelBaseRecord> readClasspath(String resource) {
+        Objects.requireNonNull(resource, "resource");
+        ClassLoader classLoader = getClass().getClassLoader();
+        try (InputStream input = classLoader.getResourceAsStream(resource)) {
+            if (input == null) {
+                throw new IllegalStateException("读取酒店基础数据失败: classpath:" + resource);
+            }
+            return read(input);
+        } catch (IOException e) {
+            throw new IllegalStateException("读取酒店基础数据失败: classpath:" + resource, e);
+        }
     }
 
     /**
@@ -84,10 +101,17 @@ public class HotelBaseDataLoader {
     }
 
     /**
-     * 加载默认路径并转换为 HotelDo 列表。
+     * 加载 classpath 默认资源并转换为 HotelDo 列表。
      */
     public List<HotelDo> loadDefault() {
-        return load(Paths.get(DEFAULT_FILE));
+        return loadClasspath(DEFAULT_FILE);
+    }
+
+    /**
+     * 加载 classpath 中指定资源并转换为 HotelDo 列表。
+     */
+    public List<HotelDo> loadClasspath(String resource) {
+        return readClasspath(resource).stream().map(this::convert).collect(Collectors.toList());
     }
 
     /**
@@ -112,17 +136,36 @@ public class HotelBaseDataLoader {
             throw new IllegalArgumentException("酒店基础数据记录不能为空");
         }
         CoordinatePair coordinates = resolveCoordinates(record);
+
         return HotelDo.builder()
                 .id(trimToNull(record.getId()))
+                .ratePlanId(trimToNull(record.getId()))
+                .hotelId(trimToNull(record.getMhotelId()))
                 .name(trimToNull(record.getHotelName()))
                 .address(trimToNull(record.getAddress()))
-                .city(trimToNull(record.getCityId()))
+                .cityId(trimToNull(record.getCityId()))
+                .cityName(trimToNull(record.getCityName()))
                 .longitude(coordinates.longitude)
                 .latitude(coordinates.latitude)
                 .star(parseInteger(record.getStarRate()))
-                .ratePlanPrices(toJson(record.getRpPrices()))
-                .ratePlanRoomSts(toJson(record.getRpRoomSts()))
+                .ratePlanPrices(encodeRatePlan(record.getRpPrices()))
+                .ratePlanRoomSts(encodeRatePlan(record.getRpRoomSts()))
                 .build();
+    }
+
+    /**
+     * 将价格/房态数据编码为紧凑字符串；数据缺失时返回 null。
+     */
+    private String encodeRatePlan(RatePlanData data) {
+        if (data == null || trimToNull(data.getDate()) == null || data.getList() == null) {
+            return null;
+        }
+        int[] values = data.getList().stream()
+                .filter(Objects::nonNull)
+                .mapToInt(Integer::intValue)
+                .toArray();
+        LocalDate date = LocalDate.parse(data.getDate().trim());
+        return RpByteUtils.bytesToString(RpByteUtils.encodeRatePlan(date, values));
     }
 
     private CoordinatePair resolveCoordinates(HotelBaseRecord record) {
@@ -182,17 +225,6 @@ public class HotelBaseDataLoader {
             return Integer.valueOf(text);
         } catch (NumberFormatException e) {
             return null;
-        }
-    }
-
-    private String toJson(RatePlanData data) {
-        if (data == null) {
-            return null;
-        }
-        try {
-            return objectMapper.writeValueAsString(data);
-        } catch (JsonProcessingException e) {
-            throw new IllegalStateException("序列化价格计划失败", e);
         }
     }
 

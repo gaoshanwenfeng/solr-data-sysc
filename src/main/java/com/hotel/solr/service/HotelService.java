@@ -36,7 +36,7 @@ public class HotelService {
     private final HotelSolrConverter converter;
     private final HotelQueryBuilder queryBuilder;
 
-    public HotelDo save(HotelDo hotelDo) {
+    public HotelDo create(HotelDo hotelDo) {
         validateHotel(hotelDo, true);
         Instant now = Instant.now();
         if (hotelDo.getCreateTime() == null) {

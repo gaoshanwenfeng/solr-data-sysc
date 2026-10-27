@@ -36,7 +36,7 @@ public class HotelController {
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "新增或覆盖酒店")
     public ApiResponse<HotelDo> create(@Valid @RequestBody HotelDo hotelDo) {
-        return ApiResponse.ok(hotelService.save(hotelDo));
+        return ApiResponse.ok(hotelService.create(hotelDo));
     }
 
     @PutMapping("/{id}")

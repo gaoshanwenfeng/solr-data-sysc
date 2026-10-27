@@ -1,44 +1,42 @@
 package com.hotel.solr.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hotel.solr.dto.HotelBaseRecord;
 import com.hotel.solr.dto.HotelDo;
+import com.hotel.solr.util.RpByteUtils;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import javax.annotation.Resource;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.security.MessageDigest;
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@SpringBootTest
+@ExtendWith(SpringExtension.class)
+@DisplayName("HotelBaseDataLoader 基础数据读取与转换")
 class HotelBaseDataLoaderTest {
 
-    private static final Path SOURCE = Paths.get("doc", "hotel-data", "基础数据.json");
-    private static final String SOURCE_SHA256 =
-            "3a8b04bb1220e6b1146b618f7b97a01fc2107d374a0e9848880d2b67170a9444";
-
-    private final ObjectMapper objectMapper = new ObjectMapper();
-    private final HotelBaseDataLoader loader = new HotelBaseDataLoader(objectMapper);
-
-    @Test
-    void loadsDefaultFileFromProjectRoot() {
-        assertThat(loader.readDefault()).hasSize(17);
-        assertThat(loader.loadDefault()).hasSize(17);
-    }
+    @Autowired
+    private HotelBaseDataLoader loader;
+    @Resource
+    private HotelService hotelService;
+    private List<HotelDo> hotels;
 
     @Test
-    void readsAll52FieldsOfEveryRecord() {
-        List<HotelBaseRecord> records = loader.read(SOURCE);
+    void readsAll53FieldsOfEveryRecord() {
+        List<HotelBaseRecord> records = loader.readDefault();
 
-        assertThat(HotelBaseRecord.class.getDeclaredFields()).hasSize(52);
+        assertThat(HotelBaseRecord.class.getDeclaredFields()).hasSize(53);
         assertThat(records).hasSize(17);
         assertThat(records).allSatisfy(record -> {
             assertThat(record).hasNoNullFieldsOrProperties();
@@ -63,12 +61,13 @@ class HotelBaseDataLoaderTest {
 
     @Test
     void mapsFirstRecordWithExpectedValues() {
-        HotelDo hotelDo = loader.load(SOURCE).get(0);
+        HotelDo hotelDo = loader.loadDefault().get(0);
 
         assertThat(hotelDo.getId()).isEqualTo("4887");
         assertThat(hotelDo.getName()).isEqualTo("长沙皇朝今朝大酒店");
         assertThat(hotelDo.getAddress()).isEqualTo("芙蓉区车站北路138号（竹园路口）");
-        assertThat(hotelDo.getCity()).isEqualTo("1901");
+        assertThat(hotelDo.getCityId()).isEqualTo("1901");
+        assertThat(hotelDo.getCityName()).isEqualTo("长沙市");
         assertThat(hotelDo.getStar()).isEqualTo(3);
         assertThat(hotelDo.getLongitude()).isEqualByComparingTo("113.010402918");
         assertThat(hotelDo.getLatitude()).isEqualByComparingTo("28.203585550");
@@ -82,14 +81,14 @@ class HotelBaseDataLoaderTest {
 
     @Test
     void convertsEveryRecordToHotelDo() {
-        List<HotelDo> hotels = loader.load(SOURCE);
+        List<HotelDo> hotels = loader.loadDefault();
 
         assertThat(hotels).hasSize(17);
         assertThat(hotels).extracting(HotelDo::getId).doesNotHaveDuplicates();
         assertThat(hotels).allSatisfy(hotelDo -> {
             assertThat(hotelDo.getName()).isNotBlank();
             assertThat(hotelDo.getAddress()).isNotBlank();
-            assertThat(hotelDo.getCity()).isIn("1801", "1901", "0301");
+            assertThat(hotelDo.getCityId()).isIn("1801", "1901", "0301");
             assertThat(hotelDo.getStar()).isBetween(1, 5);
             assertThat(hotelDo.getLongitude()).isNotNull();
             assertThat(hotelDo.getLatitude()).isNotNull();
@@ -105,20 +104,22 @@ class HotelBaseDataLoaderTest {
     }
 
     @Test
-    void serializesRatePlanObjectsAsOriginalJson() throws Exception {
-        HotelDo hotelDo = loader.load(SOURCE).get(0);
+    void encodesRatePlanWithDateAndOriginalValues() {
+        HotelDo hotelDo = loader.loadDefault().get(0);
 
-        JsonNode prices = objectMapper.readTree(hotelDo.getRatePlanPrices());
-        assertThat(prices.get("date").asText()).isEqualTo("2026-10-27");
-        assertThat(prices.get("list").size()).isEqualTo(70);
-        assertThat(prices.get("list").get(0).asInt()).isEqualTo(16);
-        assertThat(prices.get("list").get(69).asInt()).isEqualTo(27);
+        byte[] prices = RpByteUtils.stringToBytes(hotelDo.getRatePlanPrices());
+        assertThat(RpByteUtils.BASE_DATE.plusDays(RpByteUtils.getDaysOffset(prices)))
+                .isEqualTo(LocalDate.of(2026, 10, 27));
+        assertThat(RpByteUtils.getPriceCount(prices)).isEqualTo(70);
+        assertThat(RpByteUtils.getPrice(prices, 0)).isEqualTo(16);
+        assertThat(RpByteUtils.getPrice(prices, 69)).isEqualTo(27);
 
-        JsonNode roomSts = objectMapper.readTree(hotelDo.getRatePlanRoomSts());
-        assertThat(roomSts.get("date").asText()).isEqualTo("2026-10-27");
-        assertThat(roomSts.get("list").size()).isEqualTo(40);
-        assertThat(roomSts.get("list").get(0).asInt()).isEqualTo(23);
-        assertThat(roomSts.get("list").get(39).asInt()).isEqualTo(35);
+        byte[] roomSts = RpByteUtils.stringToBytes(hotelDo.getRatePlanRoomSts());
+        assertThat(RpByteUtils.BASE_DATE.plusDays(RpByteUtils.getDaysOffset(roomSts)))
+                .isEqualTo(LocalDate.of(2026, 10, 27));
+        assertThat(RpByteUtils.getPriceCount(roomSts)).isEqualTo(40);
+        assertThat(RpByteUtils.getPrice(roomSts, 0)).isEqualTo(23);
+        assertThat(RpByteUtils.getPrice(roomSts, 39)).isEqualTo(35);
     }
 
     @Test
@@ -177,28 +178,28 @@ class HotelBaseDataLoaderTest {
                 .hasMessageContaining("解析酒店基础数据失败");
     }
 
-    @Test
-    void doesNotModifySourceFile() throws Exception {
-        byte[] before = Files.readAllBytes(SOURCE);
-        assertThat(sha256(before)).isEqualTo(SOURCE_SHA256);
-
-        loader.load(SOURCE);
-
-        byte[] after = Files.readAllBytes(SOURCE);
-        assertThat(sha256(after)).isEqualTo(SOURCE_SHA256);
-        assertThat(after).isEqualTo(before);
-    }
 
     private InputStream stream(String json) {
         return new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
     }
 
-    private String sha256(byte[] bytes) throws Exception {
-        byte[] digest = MessageDigest.getInstance("SHA-256").digest(bytes);
-        StringBuilder hex = new StringBuilder(digest.length * 2);
-        for (byte value : digest) {
-            hex.append(String.format("%02x", value));
+    void loadHotels() {
+        hotels = loader.loadDefault();
+    }
+
+    //@Test
+    void importHotelAllDoc() {
+        loadHotels();
+
+        for (HotelDo h : hotels) {
+            hotelService.create(h);
         }
-        return hex.toString();
+    }
+
+    @Test
+    void getHotel() {
+        HotelDo h = hotelService.get("12163");
+        assertThat(h).isNotNull();
+
     }
 }

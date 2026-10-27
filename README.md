@@ -22,8 +22,8 @@
 ├── build.gradle
 ├── settings.gradle                 # 阿里云 / 腾讯云 / 本地仓库配置
 ├── gradle/wrapper                  # Wrapper 使用腾讯云镜像
-├── doc/
-│   └── hotel-data/基础数据.json     # 只读基础数据源（不在代码中修改）
+├── src/main/resources/
+│   └── dih-hotel-rp.json           # 只读基础数据源（classpath，不在代码中修改）
 ├── solr/
 │   ├── schema.json                 # 业务字段的 Schema API 定义（参考）
 │   └── hotelDo/                      # 可直接部署的 Solr core
@@ -35,7 +35,7 @@
 │   ├── install-ik.sh               # 下载 IK 分词器到 Solr
 │   ├── deploy-core.sh              # 部署 solr/hotelDo 到 Solr 安装目录
 │   └── init-solr.sh                # 备选：为 _default core 幂等补字段
-└── src/main/java/com/hotelDo/solr/
+└── src/main/java/com/hotel/solr/
     ├── config/                     # SolrClient、配置属性、OpenAPI
     ├── controller/                 # REST 接口
     ├── dto/                        # 请求/响应模型
@@ -165,14 +165,15 @@ Swagger UI：<http://localhost:8080/swagger-ui.html>
 | `id` | string | 唯一键，必填（`managed-schema` 定义） |
 | `name` | text_ik | 酒店名称，IK 分词，检索权重最高 |
 | `address` | text_ik | 地址，IK 分词 |
-| `city` | string | 城市，精确筛选 |
+| `city_id` | string | 城市编码，精确筛选 |
+| `city_name` | string | 城市名称，精确筛选 |
 | `longitude` | pdouble | 经度，范围 [-180, 180]，小数点后至少 6 位 |
 | `latitude` | pdouble | 纬度，范围 [-90, 90]，小数点后至少 6 位 |
 | `star` | pint | 星级 |
 | `price` | pfloat | 价格 |
 | `tags` | string（多值） | 标签，精确筛选 |
-| `rate_plan_prices` | string | 价格计划 JSON 字符串，仅存储不索引 |
-| `rate_plan_room_sts` | string | 房型房态 JSON 字符串，仅存储不索引 |
+| `rate_plan_prices` | string | 价格计划，`RpByteUtils` 编码字符串，仅存储不索引 |
+| `rate_plan_room_sts` | string | 房型房态，`RpByteUtils` 编码字符串，仅存储不索引 |
 | `create_time` / `update_time` | pdate | 服务端维护 |
 
 > `_version_`、`_root_`、`_text_` 是 Solr 内部字段：`_version_` 用于原子更新/实时获取，
@@ -191,14 +192,14 @@ JSON 中请直接使用数字（不要加引号），例如 `"longitude": 121.47
 
 ### 基础数据读取与 HotelDo 转换
 
-`doc/hotel-data/基础数据.json` 是只读数据源，根结构为 `{"RECORDS":[...]}`，当前包含 17 条酒店记录、每条 52 个字段。读取代码只使用输入流，不会回写或修改该文件；测试中固定校验其 SHA-256。
+`src/main/resources/dih-hotel-rp.json` 是只读数据源，classpath 根目录下的文件名为 `dih-hotel-rp.json`。根结构为 `{"RECORDS":[...]}`，当前包含 17 条酒店记录、每条 53 个字段。读取代码只使用输入流，不会回写或修改该文件；打成 jar 后也能从 classpath 直接读取。
 
 建模类：
 
 | 类 | 说明 |
 | --- | --- |
-| `HotelBaseDataDocument` | 根结构，对应 `RECORDS` |
-| `HotelBaseRecord` | 单条源记录，完整保留 52 个原始字段（全部按字符串接收） |
+| `HotelInfoDataJsonSet` | 根结构，对应 `RECORDS` |
+| `HotelBaseRecord` | 单条源记录，完整保留 53 个原始字段（全部按字符串接收） |
 | `RatePlanData` | `rp_room_sts` / `rp_prices` 的 `date + list` 结构 |
 | `HotelBaseDataLoader` | 读取、解析并转换为 `HotelDo`，由 Spring 管理 |
 
@@ -208,15 +209,16 @@ JSON 中请直接使用数字（不要加引号），例如 `"longitude": 121.47
 @Autowired
 private HotelBaseDataLoader hotelBaseDataLoader;
 
-// 读取 doc/hotel-data/基础数据.json 并转换
+// 读取 classpath 根目录 dih-hotel-rp.json 并转换
 List<HotelDo> hotels = hotelBaseDataLoader.loadDefault();
 ```
 
-也可以指定路径或输入流：
+也可以指定 classpath 资源、文件路径或输入流：
 
 ```java
-List<HotelDo> hotels = hotelBaseDataLoader.load(Paths.get("/data/基础数据.json"));
-List<HotelBaseRecord> records = hotelBaseDataLoader.read(Paths.get("/data/基础数据.json"));
+List<HotelDo> hotels = hotelBaseDataLoader.loadClasspath("dih-hotel-rp.json");
+List<HotelDo> hotels = hotelBaseDataLoader.load(Paths.get("/data/dih-hotel-rp.json"));
+List<HotelBaseRecord> records = hotelBaseDataLoader.read(Paths.get("/data/dih-hotel-rp.json"));
 ```
 
 字段映射：
@@ -226,14 +228,16 @@ List<HotelBaseRecord> records = hotelBaseDataLoader.read(Paths.get("/data/基础
 | `id` | `id` | 直接映射 |
 | `hotel_name` | `name` | 直接映射 |
 | `address` | `address` | 直接映射 |
-| `city_id` | `city` | 源数据只有城市编码，按编码写入 |
+| `city_id` | `cityId` | 直接映射 |
+| `city_name` | `cityName` | 直接映射 |
 | `google_lat` / `google_lon` | `latitude` / `longitude` | 优先使用；整对无效时回退 Baidu |
 | `baidu_lat` / `baidu_lon` | `latitude` / `longitude` | Google 坐标无效时使用 |
 | `star_rate` | `star` | 转为 `Integer` |
-| `rp_prices` | `rate_plan_prices` | 原始对象序列化为 JSON 字符串 |
-| `rp_room_sts` | `rate_plan_room_sts` | 原始对象序列化为 JSON 字符串 |
+| `rp_prices` | `rate_plan_prices` | 用 `RpByteUtils` 将日期和价格列表编码为紧凑字符串 |
+| `rp_room_sts` | `rate_plan_room_sts` | 用 `RpByteUtils` 将日期和房态列表编码为紧凑字符串 |
 
 - 两对坐标都无效（含源数据的 `-1.000000000` 缺失标记）时，经纬度留空。
+- 价格/房态数据缺失时，`rate_plan_prices` / `rate_plan_room_sts` 留空。
 - `price`、`tags`、`create_time`、`update_time` 在源数据中没有对应值，转换时留空；写入 Solr 时由 `HotelService` 维护时间字段。
 - 其余源字段保留在 `HotelBaseRecord` 中，不进入 `HotelDo`。
 - 转换只发生在内存中，不会自动写入 Solr；如需导入，可在 core 部署后调用 `hotelService.saveBatch(hotels)`。
@@ -306,7 +310,7 @@ curl -G http://localhost:8080/api/hotelDos \
 | 参数 | 说明 |
 | --- | --- |
 | `keyword` | 对 `name^2`、`address` 做 edismax 检索，空格分隔多个词 |
-| `city` | 城市精确匹配 |
+| `city` | 城市名称精确匹配（`city_name`） |
 | `star` | 星级精确匹配 |
 | `min_price` / `max_price` | 价格区间（可只传一端） |
 | `tags` | 标签，可重复传参，多个标签为 OR 关系 |
@@ -345,6 +349,8 @@ curl -X POST http://localhost:8080/api/solr/commit
 ```
 
 测试不依赖真实 Solr 实例：Service 层使用 Mockito 模拟 `SolrClient`，Controller 使用 MockMvc。
+`HotelBaseDataLoaderTest` 使用 `@SpringBootTest` + JUnit 5 `@ExtendWith(SpringExtension.class)`，
+通过 `@Autowired` 注入 `HotelBaseDataLoader`，验证真实上下文下从 classpath 读取、解析与转换。
 
 ## 七、仓库与构建说明
 
@@ -369,3 +375,4 @@ Gradle Wrapper 的发行包地址已切换为腾讯云镜像。
 | 写入后立即查不到 | 保持 `commit-after-write: true`，或等待 Solr 自身 autoCommit |
 | 部分更新报文档不存在 | PATCH 前会先校验文档；确认 id 正确 |
 | 经纬度返回 400 | 确认经纬度成对提供、范围正确，且 JSON 小数位至少 6 位（如 `121.473701`） |
+| 提示 `读取酒店基础数据失败: classpath:dih-hotel-rp.json` | 确认 `src/main/resources/dih-hotel-rp.json` 存在，并已包含在构建产物中 |

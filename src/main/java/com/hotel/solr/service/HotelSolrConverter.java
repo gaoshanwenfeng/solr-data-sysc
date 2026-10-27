@@ -21,9 +21,12 @@ import java.util.stream.Collectors;
 public class HotelSolrConverter {
 
     public static final String FIELD_ID = "id";
+    public static final String FIELD_HOTEL_ID = "hotel_id";
+    public static final String FIELD_RATE_PLAIN_ID = "rate_plan_id";
     public static final String FIELD_NAME = "name";
     public static final String FIELD_ADDRESS = "address";
-    public static final String FIELD_CITY = "city";
+    public static final String FIELD_CITY_ID = "city_id";
+    public static final String FIELD_CITY_NAME = "city_name";
     public static final String FIELD_LONGITUDE = "longitude";
     public static final String FIELD_LATITUDE = "latitude";
     public static final String FIELD_STAR = "star";
@@ -37,9 +40,12 @@ public class HotelSolrConverter {
     public SolrInputDocument toDocument(HotelDo hotelDo) {
         SolrInputDocument doc = new SolrInputDocument();
         addIfPresent(doc, FIELD_ID, hotelDo.getId());
+        addIfPresent(doc, FIELD_HOTEL_ID, hotelDo.getHotelId());
+        addIfPresent(doc, FIELD_RATE_PLAIN_ID, hotelDo.getRatePlanId());
         addIfPresent(doc, FIELD_NAME, hotelDo.getName());
         addIfPresent(doc, FIELD_ADDRESS, hotelDo.getAddress());
-        addIfPresent(doc, FIELD_CITY, hotelDo.getCity());
+        addIfPresent(doc, FIELD_CITY_ID, hotelDo.getCityId());
+        addIfPresent(doc, FIELD_CITY_NAME, hotelDo.getCityName());
         addIfPresent(doc, FIELD_LONGITUDE, toDouble(hotelDo.getLongitude()));
         addIfPresent(doc, FIELD_LATITUDE, toDouble(hotelDo.getLatitude()));
         addIfPresent(doc, FIELD_STAR, hotelDo.getStar());
@@ -65,9 +71,12 @@ public class HotelSolrConverter {
     public HotelDo toHotel(SolrDocument document) {
         HotelDo hotelDo = new HotelDo();
         hotelDo.setId(asString(document.getFieldValue(FIELD_ID)));
+        hotelDo.setHotelId(asString(document.getFieldValue(FIELD_HOTEL_ID)));
+        hotelDo.setRatePlanId(asString(document.getFieldValue(FIELD_RATE_PLAIN_ID)));
         hotelDo.setName(asString(document.getFieldValue(FIELD_NAME)));
         hotelDo.setAddress(asString(document.getFieldValue(FIELD_ADDRESS)));
-        hotelDo.setCity(asString(document.getFieldValue(FIELD_CITY)));
+        hotelDo.setCityId(asString(document.getFieldValue(FIELD_CITY_ID)));
+        hotelDo.setCityName(asString(document.getFieldValue(FIELD_CITY_NAME)));
         hotelDo.setLongitude(asBigDecimal(document.getFieldValue(FIELD_LONGITUDE)));
         hotelDo.setLatitude(asBigDecimal(document.getFieldValue(FIELD_LATITUDE)));
         hotelDo.setStar(asInteger(document.getFieldValue(FIELD_STAR)));
@@ -88,7 +97,8 @@ public class HotelSolrConverter {
         doc.setField(FIELD_ID, id);
         addAtomicIfPresent(doc, FIELD_NAME, patch.getName());
         addAtomicIfPresent(doc, FIELD_ADDRESS, patch.getAddress());
-        addAtomicIfPresent(doc, FIELD_CITY, patch.getCity());
+        addIfPresent(doc, FIELD_CITY_ID, patch.getCityId());
+        addIfPresent(doc, FIELD_CITY_NAME, patch.getCityName());
         addAtomicIfPresent(doc, FIELD_LONGITUDE, toDouble(patch.getLongitude()));
         addAtomicIfPresent(doc, FIELD_LATITUDE, toDouble(patch.getLatitude()));
         addAtomicIfPresent(doc, FIELD_STAR, patch.getStar());
