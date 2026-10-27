@@ -1,0 +1,146 @@
+[
+  {
+    "add-field-type": {
+      "name": "text_ik",
+      "class": "solr.TextField",
+      "positionIncrementGap": "100",
+      "indexAnalyzer": {
+        "tokenizer": {
+          "class": "org.wltea.analyzer.lucene.IKTokenizerFactory",
+          "useSmart": "false"
+        },
+        "filters": [
+          {
+            "class": "solr.LowerCaseFilterFactory"
+          }
+        ]
+      },
+      "queryAnalyzer": {
+        "tokenizer": {
+          "class": "org.wltea.analyzer.lucene.IKTokenizerFactory",
+          "useSmart": "true"
+        },
+        "filters": [
+          {
+            "class": "solr.LowerCaseFilterFactory"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "add-field": {
+      "name": "name",
+      "type": "text_ik",
+      "indexed": true,
+      "stored": true,
+      "multiValued": false
+    }
+  },
+  {
+    "add-field": {
+      "name": "address",
+      "type": "text_ik",
+      "indexed": true,
+      "stored": true,
+      "multiValued": false
+    }
+  },
+  {
+    "add-field": {
+      "name": "city",
+      "type": "string",
+      "indexed": true,
+      "stored": true,
+      "multiValued": false,
+      "docValues": true
+    }
+  },
+  {
+    "add-field": {
+      "name": "longitude",
+      "type": "pdouble",
+      "indexed": true,
+      "stored": true,
+      "multiValued": false,
+      "docValues": true
+    }
+  },
+  {
+    "add-field": {
+      "name": "latitude",
+      "type": "pdouble",
+      "indexed": true,
+      "stored": true,
+      "multiValued": false,
+      "docValues": true
+    }
+  },
+  {
+    "add-field": {
+      "name": "star",
+      "type": "pint",
+      "indexed": true,
+      "stored": true,
+      "multiValued": false,
+      "docValues": true
+    }
+  },
+  {
+    "add-field": {
+      "name": "price",
+      "type": "pfloat",
+      "indexed": true,
+      "stored": true,
+      "multiValued": false,
+      "docValues": true
+    }
+  },
+  {
+    "add-field": {
+      "name": "tags",
+      "type": "string",
+      "indexed": true,
+      "stored": true,
+      "multiValued": true
+    }
+  },
+  {
+    "add-field": {
+      "name": "rate_plan_prices",
+      "type": "string",
+      "indexed": false,
+      "stored": true,
+      "multiValued": false
+    }
+  },
+  {
+    "add-field": {
+      "name": "rate_plan_room_sts",
+      "type": "string",
+      "indexed": false,
+      "stored": true,
+      "multiValued": false
+    }
+  },
+  {
+    "add-field": {
+      "name": "create_time",
+      "type": "pdate",
+      "indexed": true,
+      "stored": true,
+      "multiValued": false,
+      "docValues": true
+    }
+  },
+  {
+    "add-field": {
+      "name": "update_time",
+      "type": "pdate",
+      "indexed": true,
+      "stored": true,
+      "multiValued": false,
+      "docValues": true
+    }
+  }
+]

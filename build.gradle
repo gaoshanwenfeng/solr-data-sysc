@@ -1,0 +1,56 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '2.7.18'
+    id 'io.spring.dependency-management' version '1.0.15.RELEASE'
+}
+
+group = 'com.hotel'
+version = '0.0.1-SNAPSHOT'
+description = 'Hotel data management service based on Spring Boot and Solr 8.0.0'
+
+sourceCompatibility = '1.8'
+targetCompatibility = '1.8'
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenLocal()
+    maven { url 'https://maven.aliyun.com/repository/public' }
+    maven { url 'https://mirrors.cloud.tencent.com/nexus/repository/maven-public/' }
+    mavenCentral()
+}
+
+ext {
+    solrVersion = '8.0.0'
+    springdocVersion = '1.7.0'
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    // 注意：SolrJ 8.0.0 的 JavaBinCodec 依赖 ZooKeeper 中的 ByteBufferInputStream，
+    // 即使只使用 HttpSolrClient 也不能排除 zookeeper，否则解析响应时会抛 NoClassDefFoundError。
+    implementation "org.apache.solr:solr-solrj:${solrVersion}"
+
+    implementation "org.springdoc:springdoc-openapi-ui:${springdocVersion}"
+
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    testCompileOnly 'org.projectlombok:lombok'
+    testAnnotationProcessor 'org.projectlombok:lombok'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+        exceptionFormat 'full'
+    }
+}

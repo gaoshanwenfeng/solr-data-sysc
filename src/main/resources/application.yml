@@ -1,0 +1,31 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: hotel-solr-sysc
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+
+solr:
+  # Solr 服务地址（standalone 模式），后续按实际环境修改
+  base-url: http://localhost:8983/solr
+  # core 名称
+  core: hotel
+  connection-timeout-ms: 5000
+  socket-timeout-ms: 15000
+  # 写操作后是否立即 commit（数据量小、要求读己之写时保持 true）
+  commit-after-write: true
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  level:
+    com.hotel.solr: INFO

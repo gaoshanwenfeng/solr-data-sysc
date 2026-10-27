@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  hotelDo-solr-sysc 酒店 core 的 managed-schema。
+
+  业务字段与 solr/schema.json 保持一致；_version_、_root_、_text_、*_str
+  是 Solr 内部或 _default solrconfig 兼容所需的字段，业务代码不应直接写入。
+-->
+<schema name="hotelDo" version="1.6">
+
+  <!-- ==================== 字段类型 ==================== -->
+
+  <!-- 精确匹配与唯一键 -->
+  <fieldType name="string" class="solr.StrField" sortMissingLast="true" docValues="true"/>
+  <fieldType name="strings" class="solr.StrField" sortMissingLast="true" multiValued="true" docValues="true"/>
+
+  <!-- 数值与日期 -->
+  <fieldType name="boolean" class="solr.BoolField" sortMissingLast="true"/>
+  <fieldType name="booleans" class="solr.BoolField" sortMissingLast="true" multiValued="true"/>
+  <fieldType name="pint" class="solr.IntPointField" docValues="true"/>
+  <fieldType name="pfloat" class="solr.FloatPointField" docValues="true"/>
+  <fieldType name="plong" class="solr.LongPointField" docValues="true"/>
+  <fieldType name="pdouble" class="solr.DoublePointField" docValues="true"/>
+  <fieldType name="pdate" class="solr.DatePointField" docValues="true"/>
+  <fieldType name="pints" class="solr.IntPointField" docValues="true" multiValued="true"/>
+  <fieldType name="pfloats" class="solr.FloatPointField" docValues="true" multiValued="true"/>
+  <fieldType name="plongs" class="solr.LongPointField" docValues="true" multiValued="true"/>
+  <fieldType name="pdoubles" class="solr.DoublePointField" docValues="true" multiValued="true"/>
+  <fieldType name="pdates" class="solr.DatePointField" docValues="true" multiValued="true"/>
+
+  <!-- Solr 内置组件（spellcheck、schemaless 映射）使用的基础文本类型 -->
+  <fieldType name="text_general" class="solr.TextField" positionIncrementGap="100">
+    <analyzer type="index">
+      <tokenizer class="solr.StandardTokenizerFactory"/>
+      <filter class="solr.LowerCaseFilterFactory"/>
+    </analyzer>
+    <analyzer type="query">
+      <tokenizer class="solr.StandardTokenizerFactory"/>
+      <filter class="solr.LowerCaseFilterFactory"/>
+    </analyzer>
+  </fieldType>
+
+  <!-- 中文分词：索引粒度细（useSmart=false），查询粒度粗（useSmart=true） -->
+  <fieldType name="text_ik" class="solr.TextField" positionIncrementGap="100">
+    <analyzer type="index">
+      <tokenizer class="org.wltea.analyzer.lucene.IKTokenizerFactory" useSmart="false"/>
+      <filter class="solr.LowerCaseFilterFactory"/>
+    </analyzer>
+    <analyzer type="query">
+      <tokenizer class="org.wltea.analyzer.lucene.IKTokenizerFactory" useSmart="true"/>
+      <filter class="solr.LowerCaseFilterFactory"/>
+    </analyzer>
+  </fieldType>
+
+  <!-- ==================== 业务字段 ==================== -->
+
+  <field name="id" type="string" indexed="true" stored="true" required="true" multiValued="false"/>
+  <field name="name" type="text_ik" indexed="true" stored="true" multiValued="false"/>
+  <field name="address" type="text_ik" indexed="true" stored="true" multiValued="false"/>
+  <field name="city" type="string" indexed="true" stored="true" multiValued="false" docValues="true"/>
+  <field name="longitude" type="pdouble" indexed="true" stored="true" multiValued="false" docValues="true"/>
+  <field name="latitude" type="pdouble" indexed="true" stored="true" multiValued="false" docValues="true"/>
+  <field name="star" type="pint" indexed="true" stored="true" multiValued="false" docValues="true"/>
+  <field name="price" type="pfloat" indexed="true" stored="true" multiValued="false" docValues="true"/>
+  <field name="tags" type="string" indexed="true" stored="true" multiValued="true"/>
+  <field name="rate_plan_prices" type="string" indexed="false" stored="true" multiValued="false" docValues="false"/>
+  <field name="rate_plan_room_sts" type="string" indexed="false" stored="true" multiValued="false" docValues="false"/>
+  <field name="create_time" type="pdate" indexed="true" stored="true" multiValued="false" docValues="true"/>
+  <field name="update_time" type="pdate" indexed="true" stored="true" multiValued="false" docValues="true"/>
+
+  <!-- ==================== Solr 内部字段 ==================== -->
+
+  <!-- 文档版本，原子更新与实时获取依赖此字段 -->
+  <field name="_version_" type="plong" indexed="false" stored="false"/>
+  <!-- 嵌套文档的根标识 -->
+  <field name="_root_" type="string" indexed="true" stored="false" docValues="false"/>
+  <!-- 默认搜索字段：由 name/address 复制而来，供未指定字段的查询使用 -->
+  <field name="_text_" type="text_ik" indexed="true" stored="false" multiValued="true"/>
+
+  <!-- _default solrconfig 中 schemaless 复制字段所需；本 core 已关闭自动加字段 -->
+  <dynamicField name="*_str" type="strings" stored="false" docValues="true" indexed="false" useDocValuesAsStored="false"/>
+
+  <uniqueKey>id</uniqueKey>
+
+  <copyField source="name" dest="_text_"/>
+  <copyField source="address" dest="_text_"/>
+
+</schema>
