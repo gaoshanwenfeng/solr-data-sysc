@@ -16,6 +16,7 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -107,14 +108,14 @@ class HotelBaseDataLoaderTest {
     void encodesRatePlanWithDateAndOriginalValues() {
         HotelDo hotelDo = loader.loadDefault().get(0);
 
-        byte[] prices = RpByteUtils.stringToBytes(hotelDo.getRatePlanPrices());
+        byte[] prices = RpByteUtils.decodeToBytes(hotelDo.getRatePlanPrices());
         assertThat(RpByteUtils.BASE_DATE.plusDays(RpByteUtils.getDaysOffset(prices)))
                 .isEqualTo(LocalDate.of(2026, 10, 27));
         assertThat(RpByteUtils.getPriceCount(prices)).isEqualTo(70);
         assertThat(RpByteUtils.getPrice(prices, 0)).isEqualTo(16);
         assertThat(RpByteUtils.getPrice(prices, 69)).isEqualTo(27);
 
-        byte[] roomSts = RpByteUtils.stringToBytes(hotelDo.getRatePlanRoomSts());
+        byte[] roomSts = RpByteUtils.decodeToBytes(hotelDo.getRatePlanRoomSts());
         assertThat(RpByteUtils.BASE_DATE.plusDays(RpByteUtils.getDaysOffset(roomSts)))
                 .isEqualTo(LocalDate.of(2026, 10, 27));
         assertThat(RpByteUtils.getPriceCount(roomSts)).isEqualTo(40);
@@ -187,19 +188,27 @@ class HotelBaseDataLoaderTest {
         hotels = loader.loadDefault();
     }
 
+    void getHotelRowDate() {
+        loadHotels();
+
+    }
+
     //@Test
     void importHotelAllDoc() {
         loadHotels();
-
         for (HotelDo h : hotels) {
             hotelService.create(h);
         }
+        System.out.println("finish****" );
     }
 
     @Test
     void getHotel() {
         HotelDo h = hotelService.get("12163");
         assertThat(h).isNotNull();
-
+        int[] prices = RpByteUtils.bytesToIntArr(RpByteUtils.decodeToBytes(h.getRatePlanPrices()));
+        int[] roomSts = RpByteUtils.bytesToIntArr(RpByteUtils.decodeToBytes(h.getRatePlanRoomSts()));
+        System.out.println("prices : " + Arrays.toString(prices));
+        System.out.println("roomSts : " + Arrays.toString(roomSts));
     }
 }

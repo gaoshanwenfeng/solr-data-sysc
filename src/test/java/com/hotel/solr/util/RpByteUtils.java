@@ -147,7 +147,7 @@ public final class RpByteUtils {
      * @author gaofeng
      * @date 2026/10/26
      */
-    public static byte[] stringToBytes(String text) {
+    public static byte[] decodeToBytes(String text) {
         Objects.requireNonNull(text, "text");
         return text.getBytes(BYTE_CHARSET);
     }

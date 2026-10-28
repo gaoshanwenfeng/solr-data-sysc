@@ -63,8 +63,8 @@
   <field name="star" type="pint" indexed="true" stored="true" multiValued="false" docValues="true"/>
   <field name="price" type="pfloat" indexed="true" stored="true" multiValued="false" docValues="true"/>
   <field name="tags" type="string" indexed="true" stored="true" multiValued="true"/>
-  <field name="rate_plan_prices" type="string" indexed="false" stored="true" multiValued="false" docValues="false"/>
-  <field name="rate_plan_room_sts" type="string" indexed="false" stored="true" multiValued="false" docValues="false"/>
+  <field name="rate_plan_prices" type="string" indexed="false" stored="true" multiValued="false" docValues="true"/>
+  <field name="rate_plan_room_sts" type="string" indexed="false" stored="true" multiValued="false" docValues="true"/>
   <field name="create_time" type="pdate" indexed="true" stored="true" multiValued="false" docValues="true"/>
   <field name="update_time" type="pdate" indexed="true" stored="true" multiValued="false" docValues="true"/>
 
