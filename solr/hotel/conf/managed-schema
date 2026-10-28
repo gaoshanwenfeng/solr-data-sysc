@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!--
-  hotelDo-solr-sysc 酒店 core 的 managed-schema。
+  hotelRpDto-solr-sysc 酒店 core 的 managed-schema。
 
   业务字段与 solr/schema.json 保持一致；_version_、_root_、_text_、*_str
   是 Solr 内部或 _default solrconfig 兼容所需的字段，业务代码不应直接写入。
 -->
-<schema name="hotelDo" version="1.6">
+<schema name="hotelRpDto" version="1.6">
 
   <!-- ==================== 字段类型 ==================== -->
 

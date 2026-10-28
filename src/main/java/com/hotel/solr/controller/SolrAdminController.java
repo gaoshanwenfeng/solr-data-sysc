@@ -1,7 +1,7 @@
 package com.hotel.solr.controller;
 
-import com.hotel.solr.dto.ApiResponse;
-import com.hotel.solr.dto.HealthStatus;
+import com.hotel.solr.framework.ApiResult;
+import com.hotel.solr.model.dto.SolrCoreStatusDto;
 import com.hotel.solr.service.SolrAdminService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -23,10 +23,10 @@ public class SolrAdminController {
 
     @GetMapping("/health")
     @Operation(summary = "检查 Solr 连接与 core 状态")
-    public ResponseEntity<ApiResponse<HealthStatus>> health() {
-        HealthStatus status = solrAdminService.health();
+    public ResponseEntity<ApiResult<SolrCoreStatusDto>> health() {
+        SolrCoreStatusDto status = solrAdminService.health();
         boolean up = "UP".equals(status.getStatus());
-        ApiResponse<HealthStatus> body = ApiResponse.<HealthStatus>builder()
+        ApiResult<SolrCoreStatusDto> body = ApiResult.<SolrCoreStatusDto>builder()
                 .code(up ? 0 : 503)
                 .message(up ? "ok" : status.getMessage())
                 .data(status)
@@ -36,8 +36,16 @@ public class SolrAdminController {
 
     @PostMapping("/commit")
     @Operation(summary = "手动提交（commit）")
-    public ApiResponse<Void> commit() {
+    public ApiResult<Void> commit() {
         solrAdminService.commit();
-        return ApiResponse.ok();
+        return ApiResult.ok();
     }
+
+    @PostMapping("/import")
+    @Operation(summary = "手动提交（commit）")
+    public ApiResult<Void> dataImport() {
+        solrAdminService.importSolrData();
+        return ApiResult.ok();
+    }
+
 }

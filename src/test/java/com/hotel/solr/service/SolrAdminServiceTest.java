@@ -1,8 +1,8 @@
 package com.hotel.solr.service;
 
 import com.hotel.solr.config.SolrProperties;
-import com.hotel.solr.dto.HealthStatus;
-import com.hotel.solr.exception.BusinessException;
+import com.hotel.solr.model.dto.SolrCoreStatusDto;
+import com.hotel.solr.framework.exception.BusinessException;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
@@ -50,7 +50,7 @@ class SolrAdminServiceTest {
         when(queryResponse.getResults()).thenReturn(list);
         when(queryResponse.getElapsedTime()).thenReturn(7L);
 
-        HealthStatus status = service.health();
+        SolrCoreStatusDto status = service.health();
 
         assertThat(status.getStatus()).isEqualTo("UP");
         assertThat(status.getDocumentCount()).isEqualTo(42);
@@ -64,7 +64,7 @@ class SolrAdminServiceTest {
         when(solrClient.query(any(SolrParams.class)))
                 .thenThrow(new SolrServerException("connection refused"));
 
-        HealthStatus status = service.health();
+        SolrCoreStatusDto status = service.health();
 
         assertThat(status.getStatus()).isEqualTo("DOWN");
         assertThat(status.getMessage()).contains("connection refused");

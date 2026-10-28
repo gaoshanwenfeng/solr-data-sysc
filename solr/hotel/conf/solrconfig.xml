@@ -21,7 +21,7 @@
      this file, see http://wiki.apache.org/solr/SolrConfigXml.
 -->
 <!--
-     hotelDo-solr-sysc：基于 Solr 8.0.0 _default configset 的 solrconfig.xml。
+     hotelRpDto-solr-sysc：基于 Solr 8.0.0 _default configset 的 solrconfig.xml。
 
      与官方默认配置的主要差异：
      1. 显式使用 ManagedIndexSchemaFactory，schema 文件为 conf/managed-schema；

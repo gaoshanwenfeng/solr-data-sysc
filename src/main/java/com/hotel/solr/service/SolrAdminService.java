@@ -1,8 +1,8 @@
 package com.hotel.solr.service;
 
 import com.hotel.solr.config.SolrProperties;
-import com.hotel.solr.dto.HealthStatus;
-import com.hotel.solr.exception.BusinessException;
+import com.hotel.solr.model.dto.SolrCoreStatusDto;
+import com.hotel.solr.framework.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.solr.client.solrj.SolrClient;
@@ -14,6 +14,9 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 
+/**
+ * @author gaofeng
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -22,8 +25,8 @@ public class SolrAdminService {
     private final SolrClient solrClient;
     private final SolrProperties properties;
 
-    public HealthStatus health() {
-        HealthStatus.HealthStatusBuilder builder = HealthStatus.builder()
+    public SolrCoreStatusDto health() {
+        SolrCoreStatusDto.SolrCoreStatusDtoBuilder builder = SolrCoreStatusDto.builder()
                 .solrUrl(properties.coreUrl())
                 .core(properties.getCore());
         try {
@@ -43,6 +46,14 @@ public class SolrAdminService {
     }
 
     public void commit() {
+        try {
+            solrClient.commit();
+        } catch (SolrServerException | IOException e) {
+            throw new BusinessException(502, "Solr 提交失败: " + e.getMessage(), e);
+        }
+    }
+
+    public void importSolrData() {
         try {
             solrClient.commit();
         } catch (SolrServerException | IOException e) {

@@ -4,7 +4,7 @@ plugins {
     id 'io.spring.dependency-management' version '1.0.15.RELEASE'
 }
 
-group = 'com.hotel'
+group = 'com.up.solr'
 version = '0.0.1-SNAPSHOT'
 description = 'Hotel data management service based on Spring Boot and Solr 8.0.0'
 

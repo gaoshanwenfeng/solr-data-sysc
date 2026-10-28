@@ -2,8 +2,8 @@ package com.hotel.solr.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-import com.hotel.solr.dto.HealthStatus;
-import com.hotel.solr.exception.GlobalExceptionHandler;
+import com.hotel.solr.model.dto.SolrCoreStatusDto;
+import com.hotel.solr.framework.GlobalExceptionHandler;
 import com.hotel.solr.service.SolrAdminService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,7 +41,7 @@ class SolrAdminControllerTest {
 
     @Test
     void healthReturns200WhenUp() throws Exception {
-        when(solrAdminService.health()).thenReturn(HealthStatus.builder()
+        when(solrAdminService.health()).thenReturn(SolrCoreStatusDto.builder()
                 .status("UP")
                 .core("hotel")
                 .solrUrl("http://localhost:8983/solr/hotel")
@@ -59,7 +59,7 @@ class SolrAdminControllerTest {
 
     @Test
     void healthReturns503WhenDown() throws Exception {
-        when(solrAdminService.health()).thenReturn(HealthStatus.builder()
+        when(solrAdminService.health()).thenReturn(SolrCoreStatusDto.builder()
                 .status("DOWN")
                 .core("hotel")
                 .message("connection refused")

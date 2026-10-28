@@ -1,4 +1,4 @@
-# hotelDo-solr-sysc
+# hotelRpDto-solr-sysc
 
 基于 Spring Boot + SolrJ 8.0.0 的酒店 Solr 数据管理服务，提供酒店文档的新增、读取、更新、删除、批量操作和条件分页查询，中文检索使用 IK 分词器。
 
@@ -26,14 +26,14 @@
 │   └── dih-hotel-rp.json           # 只读基础数据源（classpath，不在代码中修改）
 ├── solr/
 │   ├── schema.json                 # 业务字段的 Schema API 定义（参考）
-│   └── hotelDo/                      # 可直接部署的 Solr core
+│   └── hotelRpDto/                      # 可直接部署的 Solr core
 │       ├── core.properties
 │       └── conf/
 │           ├── managed-schema      # 由 schema.json 生成的字段与 IK 类型
 │           └── solrconfig.xml      # 基于 Solr 8.0.0 _default 调整
 ├── scripts/
 │   ├── install-ik.sh               # 下载 IK 分词器到 Solr
-│   ├── deploy-core.sh              # 部署 solr/hotelDo 到 Solr 安装目录
+│   ├── deploy-core.sh              # 部署 solr/hotelRpDto 到 Solr 安装目录
 │   └── init-solr.sh                # 备选：为 _default core 幂等补字段
 └── src/main/java/com/hotel/solr/
     ├── config/                     # SolrClient、配置属性、OpenAPI
@@ -80,14 +80,14 @@ SOLR_INSTALL_DIR=/path/to/solr-8.0.0 IK_JAR_DIR=/your/solr/lib ./scripts/install
 
 ### 3. 部署 core（推荐）
 
-项目已提供完整的 core 配置：`solr/hotelDo/conf/managed-schema` 和 `solr/hotelDo/conf/solrconfig.xml`。
+项目已提供完整的 core 配置：`solr/hotelRpDto/conf/managed-schema` 和 `solr/hotelRpDto/conf/solrconfig.xml`。
 
 ```bash
 SOLR_INSTALL_DIR=/path/to/solr-8.0.0 ./scripts/deploy-core.sh
 /path/to/solr-8.0.0/bin/solr restart
 ```
 
-脚本会把 `solr/hotelDo/` 复制到 `$SOLR_INSTALL_DIR/server/solr/hotelDo/`：
+脚本会把 `solr/hotelRpDto/` 复制到 `$SOLR_INSTALL_DIR/server/solr/hotelRpDto/`：
 
 - 覆盖 `conf/`，保留已有 `data/` 和 `core.properties`；
 - 目标配置与项目不同时，先备份为 `conf.bak.<timestamp>`；
@@ -98,7 +98,7 @@ SOLR_INSTALL_DIR=/path/to/solr-8.0.0 ./scripts/deploy-core.sh
 如果已经有使用 `_default` configset 的 core，也可以继续用 Schema API 方式补齐字段：
 
 ```bash
-SOLR_URL=http://localhost:8983/solr SOLR_CORE=hotelDo ./scripts/init-solr.sh
+SOLR_URL=http://localhost:8983/solr SOLR_CORE=hotelRpDto ./scripts/init-solr.sh
 ```
 
 `init-solr.sh` 是幂等的，可重复执行；它会创建 core（`configSet=_default`）并逐个补齐字段。
@@ -108,16 +108,16 @@ SOLR_URL=http://localhost:8983/solr SOLR_CORE=hotelDo ./scripts/init-solr.sh
 
 ```bash
 # core 应处于 loaded 状态
-curl 'http://localhost:8983/solr/admin/cores?action=STATUS&core=hotelDo&wt=json'
+curl 'http://localhost:8983/solr/admin/cores?action=STATUS&core=hotelRpDto&wt=json'
 
 # 应返回 text_ik 字段类型定义
-curl http://localhost:8983/solr/hotelDo/schema/fieldtypes/text_ik
+curl http://localhost:8983/solr/hotelRpDto/schema/fieldtypes/text_ik
 
 # 应包含 id、name、address、city、longitude、latitude、star、price、tags 等字段
-curl http://localhost:8983/solr/hotelDo/schema/fields
+curl http://localhost:8983/solr/hotelRpDto/schema/fields
 
 # 中文分词效果（需已安装真实 IK jar）
-curl 'http://localhost:8983/solr/hotelDo/analysis/field?analysis.fieldtype=text_ik&analysis.fieldvalue=上海外滩华尔道夫酒店&wt=json'
+curl 'http://localhost:8983/solr/hotelRpDto/analysis/field?analysis.fieldtype=text_ik&analysis.fieldvalue=上海外滩华尔道夫酒店&wt=json'
 ```
 
 ### 生成的配置说明
@@ -139,7 +139,7 @@ server:
 
 solr:
   base-url: http://localhost:8983/solr   # 后续按实际环境修改
-  core: hotelDo
+  core: hotelRpDto
   connection-timeout-ms: 5000
   socket-timeout-ms: 15000
   commit-after-write: true               # 写后立即 commit，保证读己之写
@@ -153,7 +153,7 @@ solr:
 ./gradlew clean build        # 编译 + 运行测试 + 打 jar
 ./gradlew test               # 只运行测试
 ./gradlew bootRun            # 本地启动
-java -jar build/libs/hotelDo-solr-sysc-0.0.1-SNAPSHOT.jar
+java -jar build/libs/hotelRpDto-solr-sysc-0.0.1-SNAPSHOT.jar
 ```
 
 Swagger UI：<http://localhost:8080/swagger-ui.html>
@@ -255,7 +255,7 @@ List<HotelBaseRecord> records = hotelBaseDataLoader.read(Paths.get("/data/dih-ho
 ### 新增/覆盖
 
 ```bash
-curl -X POST http://localhost:8080/api/hotelDos \
+curl -X POST http://localhost:8080/api/hotelRpDtos \
   -H 'Content-Type: application/json' \
   -d '{
     "id": "h-1001",
@@ -275,25 +275,42 @@ curl -X POST http://localhost:8080/api/hotelDos \
 ### 读取 / 全量更新 / 部分更新 / 删除
 
 ```bash
-curl http://localhost:8080/api/hotelDos/h-1001
+curl http://localhost:8080/api/hotelRpDtos/h-1001
 
-curl -X PUT http://localhost:8080/api/hotelDos/h-1001 \
+curl -X PUT http://localhost:8080/api/hotelRpDtos/h-1001 \
   -H 'Content-Type: application/json' \
   -d '{"name":"上海外滩华尔道夫酒店","city":"上海",
        "longitude":121.490317,"latitude":31.241701,"star":5,"price":2988.0}'
 
-curl -X PATCH http://localhost:8080/api/hotelDos/h-1001 \
+curl -X PATCH http://localhost:8080/api/hotelRpDtos/h-1001 \
   -H 'Content-Type: application/json' \
   -d '{"longitude":121.490317,"latitude":31.241701,
        "price":2688.0,"tags":["江景","特价"]}'
 
-curl -X DELETE http://localhost:8080/api/hotelDos/h-1001
+curl -X DELETE http://localhost:8080/api/hotelRpDtos/h-1001
+
+
+curl -X "POST" 'http://127.0.0.1:9010/api/hotels/query' -H 'Content-Type: application/json' \
+  -d '{"city_id":"1801","checkin":"2026-10-27","checkout":"2026-10-28"}'
+
+curl -X "POST" 'http://127.0.0.1:9010/api/hotels/query' -H 'Content-Type: application/json' \
+  -d '{"city_id":"1801","checkin":"2026-10-27","checkout":"2026-10-30"}'
+
+curl -X "POST" 'http://127.0.0.1:9010/api/hotels/query' -H 'Content-Type: application/json' \
+  -d '{"city_id":"1801","checkin":"2026-10-27","checkout":"2026-10-28", "keyword":"商务"}'
+
+
+curl -X "POST" 'http://127.0.0.1:9010/api/hotels/query' -H 'Content-Type: application/json' \
+  -d '{"city_id":"1801","checkin":"2026-10-27","checkout":"2026-10-28", "priceFrom":50, "priceFrom":100}'
+  
+curl -X "POST" 'http://127.0.0.1:9010/api/hotels/query' -H 'Content-Type: application/json' \
+  -d '{"city_id":"1801","checkin":"2026-10-28","checkout":"2026-10-29", "priceFrom":10, "priceFrom":100}'
 ```
 
 ### 条件分页查询
 
 ```bash
-curl -G http://localhost:8080/api/hotelDos \
+curl -G http://localhost:8080/api/hotelRpDtos \
   --data-urlencode 'keyword=外滩' \
   --data-urlencode 'city=上海' \
   --data-urlencode 'star=5' \
@@ -320,14 +337,14 @@ curl -G http://localhost:8080/api/hotelDos \
 ### 批量操作
 
 ```bash
-curl -X POST http://localhost:8080/api/hotelDos/batch \
+curl -X POST http://localhost:8080/api/hotelRpDtos/batch \
   -H 'Content-Type: application/json' \
   -d '{"hotels":[
     {"id":"h-1002","name":"上海和平饭店","city":"上海","star":5,"price":1888},
     {"id":"h-1003","name":"北京王府井酒店","city":"北京","star":5,"price":1588}
   ]}'
 
-curl -X POST http://localhost:8080/api/hotelDos/batch-delete \
+curl -X POST http://localhost:8080/api/hotelRpDtos/batch-delete \
   -H 'Content-Type: application/json' \
   -d '{"ids":["h-1002","h-1003"]}'
 ```
@@ -363,12 +380,20 @@ curl -X POST http://localhost:8080/api/solr/commit
 
 Gradle Wrapper 的发行包地址已切换为腾讯云镜像。
 
-## 八、常见问题
+## 查询样例
+df=rp_prices(rate_plan_prices, 20753, 2, 10, 300)
+fq={!frange l=10}myCustomLen(title)
+fq={!frange l=10 u=300}rp_prices(rate_plan_prices, 20753, 2, 10, 300)
+fq={!frange l=200 u=300}rp_prices(rate_plan_prices, 20754, 2, 200, 300)
+fq={!frange l=10 u=50}rp_prices(rate_plan_prices, 20753, 2, 10, 50)
+fq={!frange l=10 u=50}rp_prices(rate_plan_prices, 20753, 5, 10, 50)
+fq={!frange l=10 u=50}rp_prices(rate_plan_prices, 20753, 10, 10, 50)
+## 九、常见问题
 
 | 现象 | 处理 |
 | --- | --- |
 | core 加载失败或初始化 schema 报 `IKTokenizerFactory` 找不到 | 先执行 `install-ik.sh` 并重启 Solr；生成的 `managed-schema` 在加载时就需要 IK 类 |
-| 部署新配置后 core 加载失败 | 查看 Solr 日志，确认 IK jar 已安装、`server/solr/hotelDo/conf` 文件完整；必要时用 `conf.bak.*` 回滚 |
+| 部署新配置后 core 加载失败 | 查看 Solr 日志，确认 IK jar 已安装、`server/solr/hotelRpDto/conf` 文件完整；必要时用 `conf.bak.*` 回滚 |
 | 请求返回 502，提示连接失败 | 检查 `solr.base-url`、Solr 是否启动、core 是否存在 |
 | 中文搜索召回差 | 确认 `name`/`address` 使用 `text_ik`，并检查 `/analysis/field` 分词结果 |
 | 修改字段后旧数据查不到 | 需要重建索引；`deploy-core.sh` 不会删除已有 `data/` |
