@@ -12,7 +12,7 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * 酒店文档。JSON 字段全局使用 snake_case，与 Solr 字段保持一致。
+ * 酒店文档。JSON 字段全局使用 camelCase，与 Java 字段名保持一致。
  * @author gaofeng
  */
 @Data

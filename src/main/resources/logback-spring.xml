@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration debug="false">
+
+
+    <springProperty name="APP_NAME" source="spring.application.name" scope="context"/>
+    <springProperty name="LOG_DIR" source="logging.file.path" scope="context"/>
+    <springProperty name="ROOT_LEVEL" source="logging.level.root" defaultValue="INFO" scope="context"/>
+    <springProperty name="ROOT_APPENDER_FILTER_LEVEL" source="log.appender.root.filter.level" defaultValue="INFO" scope="context"/>
+    <springProperty name="PROFILE" source="spring.profiles.active" scope="context"/>
+
+    <property name="LOG_PATTERN"
+              value="[%d{&quot;yyyy-MM-dd'T'HH:mm:ss,SSSXXX&quot;}][${PROFILE}][%level][%thread][%X{APM_TRACER_ID}] %logger - %m%n"/>
+    <property name="LOG_FILE_PATH" value="${LOG_DIR}/${APP_NAME}/"/>
+    <property name="MAX_HISTORY" value="7"/>
+
+    <!-- root logger -->
+    <appender name="rootAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_FILE_PATH}${APP_NAME}.log</file>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>${ROOT_APPENDER_FILTER_LEVEL}</level>
+        </filter>
+        <encoder>
+            <pattern>${LOG_PATTERN}</pattern>
+            <immediateFlush>true</immediateFlush>
+            <charset>UTF8</charset>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_FILE_PATH}${APP_NAME}.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>${MAX_HISTORY}</maxHistory>
+        </rollingPolicy>
+    </appender>
+
+    <appender name="asyncRootAppender" class="ch.qos.logback.classic.AsyncAppender">
+        <appender-ref ref="rootAppender"/>
+        <queueSize>1024</queueSize>
+        <neverBlock>true</neverBlock>
+    </appender>
+
+    <!-- 控制台输出 -->
+    <appender name="stdoutAppender" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>${LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <root>
+        <level value="${ROOT_LEVEL}"/>
+        <appender-ref ref="asyncRootAppender"/>
+        <appender-ref ref="stdoutAppender"/>
+    </root>
+    <Logger name="com.init" level="debug"/>
+    <Logger name="com.alibaba.nacos.client" level="error"/>
+
+</configuration>

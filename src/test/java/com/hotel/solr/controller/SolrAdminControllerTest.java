@@ -32,7 +32,7 @@ class SolrAdminControllerTest {
     @BeforeEach
     void setUp() {
         ObjectMapper objectMapper = new ObjectMapper()
-                .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
+                .setPropertyNamingStrategy(PropertyNamingStrategies.LOWER_CAMEL_CASE);
         mockMvc = MockMvcBuilders.standaloneSetup(new SolrAdminController(solrAdminService))
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .setMessageConverters(new MappingJackson2HttpMessageConverter(objectMapper))
@@ -54,7 +54,7 @@ class SolrAdminControllerTest {
                 .andExpect(jsonPath("$.code").value(0))
                 .andExpect(jsonPath("$.data.status").value("UP"))
                 .andExpect(jsonPath("$.data.core").value("hotel"))
-                .andExpect(jsonPath("$.data.document_count").value(3));
+                .andExpect(jsonPath("$.data.documentCount").value(3));
     }
 
     @Test

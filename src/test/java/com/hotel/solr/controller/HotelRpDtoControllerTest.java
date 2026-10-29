@@ -55,7 +55,7 @@ class HotelRpDtoControllerTest {
     void setUp() {
         ObjectMapper objectMapper = new ObjectMapper()
                 .registerModule(new JavaTimeModule())
-                .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
+                .setPropertyNamingStrategy(PropertyNamingStrategies.LOWER_CAMEL_CASE)
                 .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         mockMvc = MockMvcBuilders.standaloneSetup(new HotelRpController(hotelRpService))
                 .setControllerAdvice(new GlobalExceptionHandler())
@@ -64,7 +64,7 @@ class HotelRpDtoControllerTest {
     }
 
     @Test
-    void createReturns201AndSnakeCaseFields() throws Exception {
+    void createReturns201AndCamelCaseFields() throws Exception {
         when(hotelRpService.create(any(HotelRpDo.class))).thenAnswer(invocation -> {
             HotelRpDo hotelRpDo = invocation.getArgument(0);
             hotelRpDo.setCreateTime(Instant.parse("2026-10-27T00:00:00Z"));
@@ -74,16 +74,16 @@ class HotelRpDtoControllerTest {
 
         mockMvc.perform(post("/api/hotels")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"id\":\"h1\",\"name\":\"外滩酒店\",\"city_id\":\"1901\","
-                                + "\"city_name\":\"上海\",\"star\":5,"
+                        .content("{\"id\":\"h1\",\"name\":\"外滩酒店\",\"cityId\":\"1901\","
+                                + "\"cityName\":\"上海\",\"star\":5,"
                                 + "\"price\":1299.5,\"tags\":[\"江景\"],"
-                                + "\"rate_plan_prices\":\"[]\",\"rate_plan_room_sts\":\"{}\"}"))
+                                + "\"ratePlanPrices\":\"[]\",\"ratePlanRoomSts\":\"{}\"}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.code").value(0))
                 .andExpect(jsonPath("$.data.id").value("h1"))
-                .andExpect(jsonPath("$.data.rate_plan_prices").value("[]"))
-                .andExpect(jsonPath("$.data.rate_plan_room_sts").value("{}"))
-                .andExpect(jsonPath("$.data.create_time").value("2026-10-27T00:00:00Z"));
+                .andExpect(jsonPath("$.data.ratePlanPrices").value("[]"))
+                .andExpect(jsonPath("$.data.ratePlanRoomSts").value("{}"))
+                .andExpect(jsonPath("$.data.createTime").value("2026-10-27T00:00:00Z"));
 
         ArgumentCaptor<HotelRpDo> captor = ArgumentCaptor.forClass(HotelRpDo.class);
         verify(hotelRpService).create(captor.capture());
@@ -182,14 +182,14 @@ class HotelRpDtoControllerTest {
     }
 
     @Test
-    void patchAcceptsSnakeCaseFields() throws Exception {
+    void patchAcceptsCamelCaseFields() throws Exception {
         when(hotelRpService.patch(eq("h1"), any(HotelPatchReq.class)))
                 .thenReturn(HotelRpDto.builder().id("h1").name("新名字").price(888.0f).build());
 
         mockMvc.perform(patch("/api/hotels/h1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"新名字\",\"price\":888,"
-                                + "\"rate_plan_prices\":\"[]\",\"rate_plan_room_sts\":\"{}\"}"))
+                                + "\"ratePlanPrices\":\"[]\",\"ratePlanRoomSts\":\"{}\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.price").value(888.0));
 
@@ -219,15 +219,15 @@ class HotelRpDtoControllerTest {
     }
 
     @Test
-    void queryBindsSnakeCaseParameters() throws Exception {
+    void queryBindsCamelCaseParameters() throws Exception {
         when(hotelRpService.query(any(HotelRpQueryReq.class)))
                 .thenReturn(PageResult.of(0, 2, 20, Collections.emptyList()));
 
         mockMvc.perform(post("/api/hotels/query")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"keyword\":\"上海\",\"city_id\":\"1901\","
+                        .content("{\"keyword\":\"上海\",\"cityId\":\"1901\","
                                 + "\"checkin\":\"2026-10-27\",\"checkout\":\"2026-10-28\","
-                                + "\"star\":5,\"price_from\":100,\"price_to\":500,"
+                                + "\"star\":5,\"priceFrom\":100,\"priceTo\":500,"
                                 + "\"tags\":[\"江景\",\"豪华\"],\"sort\":\"price asc\","
                                 + "\"page\":2,\"size\":20}"))
                 .andExpect(status().isOk())

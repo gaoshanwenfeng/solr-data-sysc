@@ -75,7 +75,7 @@ public class HotelQueryBuilder {
         if (q.getPriceFrom() != null && q.getPriceTo() != null) {
             addPriceFilter(solrQuery, q.getCheckinDate(), q.getDays(), q.getPriceFrom(), q.getPriceTo());
         }
-        addRoomStsFilter(solrQuery, q.getCheckinDate(), q.getDays(), 1);
+        //addRoomStsFilter(solrQuery, q.getCheckinDate(), q.getDays(), 1);
 
         if (q.getTags() != null && q.getTags().size() > 1) {
             addTagFilter(solrQuery, q.getTags());

@@ -39,6 +39,10 @@ dependencies {
 
     implementation "org.springdoc:springdoc-openapi-ui:${springdocVersion}"
 
+    // 日志框架：logback（版本由 Spring Boot BOM 统一管理）
+    implementation 'ch.qos.logback:logback-classic'
+    implementation 'ch.qos.logback:logback-core'
+
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
     testCompileOnly 'org.projectlombok:lombok'

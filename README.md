@@ -179,7 +179,7 @@ Swagger UI：<http://localhost:8080/swagger-ui.html>
 > `_version_`、`_root_`、`_text_` 是 Solr 内部字段：`_version_` 用于原子更新/实时获取，
 > `_text_` 汇总 `name` 和 `address`，供未指定字段的查询使用；业务接口不会返回这些字段。
 
-接口 JSON 统一使用 **snake_case**，与 Solr 字段名一致。
+接口 JSON 统一使用 **camelCase**，与 Java 字段名一致；Solr 内部字段名仍为 snake_case，由转换器负责映射。
 
 经纬度使用 `BigDecimal` 接收，以保留小数位数：
 
@@ -267,44 +267,47 @@ curl -X POST http://localhost:8080/api/hotelRpDtos \
     "star": 5,
     "price": 2888.0,
     "tags": ["江景", "豪华", "外滩"],
-    "rate_plan_prices": "[{\"plan\":\"标准价\",\"price\":2888}]",
-    "rate_plan_room_sts": "{\"大床房\":\"有房\",\"双床房\":\"紧张\"}"
+    "ratePlanPrices": "[{\"plan\":\"标准价\",\"price\":2888}]",
+    "ratePlanRoomSts": "{\"大床房\":\"有房\",\"双床房\":\"紧张\"}"
   }'
 ```
 
 ### 读取 / 全量更新 / 部分更新 / 删除
 
 ```bash
-curl http://localhost:8080/api/hotelRpDtos/h-1001
 
-curl -X PUT http://localhost:8080/api/hotelRpDtos/h-1001 \
-  -H 'Content-Type: application/json' \
-  -d '{"name":"上海外滩华尔道夫酒店","city":"上海",
-       "longitude":121.490317,"latitude":31.241701,"star":5,"price":2988.0}'
+curl -X "POST" 'http://127.0.0.1:9010/api/solr/health' -H 'Content-Type: application/json' 
 
-curl -X PATCH http://localhost:8080/api/hotelRpDtos/h-1001 \
-  -H 'Content-Type: application/json' \
-  -d '{"longitude":121.490317,"latitude":31.241701,
-       "price":2688.0,"tags":["江景","特价"]}'
+curl -X "POST" 'http://127.0.0.1:9010/api/solr/import' -H 'Content-Type: application/json' 
 
-curl -X DELETE http://localhost:8080/api/hotelRpDtos/h-1001
-
+curl -X "GET" 'http://127.0.0.1:9010/api/hotels/53875' -H 'Content-Type: application/json' 
 
 curl -X "POST" 'http://127.0.0.1:9010/api/hotels/query' -H 'Content-Type: application/json' \
-  -d '{"city_id":"1801","checkin":"2026-10-27","checkout":"2026-10-28"}'
+  -d '{"cityId":"1801","checkin":"2026-10-27","checkout":"2026-10-28"}'
 
 curl -X "POST" 'http://127.0.0.1:9010/api/hotels/query' -H 'Content-Type: application/json' \
-  -d '{"city_id":"1801","checkin":"2026-10-27","checkout":"2026-10-30"}'
+  -d '{"cityId":"1801","checkin":"2026-10-27","checkout":"2026-10-30"}'
 
 curl -X "POST" 'http://127.0.0.1:9010/api/hotels/query' -H 'Content-Type: application/json' \
-  -d '{"city_id":"1801","checkin":"2026-10-27","checkout":"2026-10-28", "keyword":"商务"}'
-
+  -d '{"cityId":"1801","checkin":"2026-10-27","checkout":"2026-10-28", "keyword":"商务"}'
 
 curl -X "POST" 'http://127.0.0.1:9010/api/hotels/query' -H 'Content-Type: application/json' \
-  -d '{"city_id":"1801","checkin":"2026-10-27","checkout":"2026-10-28", "priceFrom":50, "priceFrom":100}'
+  -d '{"cityId":"1801","checkin":"2026-10-28","checkout":"2026-10-29", "keyword":"商务"}'
+
+curl -X "POST" 'http://127.0.0.1:9010/api/hotels/query' -H 'Content-Type: application/json' \
+  -d '{"cityId":"1801","checkin":"2026-10-27","checkout":"2026-10-28", "priceFrom":100, "priceTo":200}'
+
+curl -X "POST" 'http://127.0.0.1:9010/api/hotels/query' -H 'Content-Type: application/json' \
+  -d '{"cityId":"1801","checkin":"2026-10-28","checkout":"2026-10-29", "priceFrom":100, "priceTo":200}'
+
+curl -X "POST" 'http://127.0.0.1:9010/api/hotels/query' -H 'Content-Type: application/json' \
+  -d '{"cityId":"1801","checkin":"2026-10-28","checkout":"2026-10-29", "priceFrom":100, "priceTo":200}'
+
+fq={!frange l=100 u=200}rp_prices(rate_plan_prices, 20753, 1, 100, 200)
+dq={!frange l=100 u=500}rp_prices(rate_plan_prices, 20753, 2, 100, 500)
   
 curl -X "POST" 'http://127.0.0.1:9010/api/hotels/query' -H 'Content-Type: application/json' \
-  -d '{"city_id":"1801","checkin":"2026-10-28","checkout":"2026-10-29", "priceFrom":10, "priceFrom":100}'
+  -d '{"cityId":"1801","checkin":"2026-10-28","checkout":"2026-10-29", "priceFrom":10, "priceTo":100}'
 ```
 
 ### 条件分页查询

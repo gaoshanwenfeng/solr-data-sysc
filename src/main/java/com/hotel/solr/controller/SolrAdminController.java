@@ -13,6 +13,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * @author gaofeng
+ */
 @RestController
 @RequestMapping("/api/solr")
 @RequiredArgsConstructor

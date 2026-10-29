@@ -3,14 +3,9 @@ package com.hotel.solr.model.req;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.validator.constraints.Range;
-
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
 import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 /**
@@ -32,14 +27,10 @@ public class HotelRpQueryReq {
     private String checkout;
 
     private Integer star;
-    @Min(value = 1)
-    @Max(value = Integer.MAX_VALUE)
+
     private Integer priceFrom;
 
-    @Min(value = 1)
-    @Max(value = Integer.MAX_VALUE)
     private Integer priceTo;
-
 
     private List<String> tags;
 
@@ -58,12 +49,10 @@ public class HotelRpQueryReq {
 
     @Getter
     @Setter
-    static
-    class LocationReq {
+    static class LocationReq {
         private String lat;
         private String lon;
-        private Integer distance = 5;
-
+        private double distance = 5.0d;
     }
 
 }

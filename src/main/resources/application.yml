@@ -5,7 +5,7 @@ spring:
   application:
     name: hotel-solr-sysc
   jackson:
-    property-naming-strategy: SNAKE_CASE
+    property-naming-strategy: LOWER_CAMEL_CASE
     default-property-inclusion: non_null
     serialization:
       write-dates-as-timestamps: false
@@ -29,3 +29,6 @@ springdoc:
 logging:
   level:
     com.hotel.solr: INFO
+  config: classpath:logback-spring.xml
+  file:
+    path: logs/boot
