@@ -252,62 +252,72 @@ List<HotelBaseRecord> records = hotelBaseDataLoader.read(Paths.get("/data/dih-ho
 
 `code=0` 表示成功；失败时 HTTP 状态码与 `code` 一致（400/404/502 等）。
 
-### 新增/覆盖
-
+## 初始化数据/监控检查
 ```bash
-curl -X POST http://localhost:8080/api/hotelRpDtos \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "id": "h-1001",
-    "name": "上海外滩华尔道夫酒店",
-    "address": "中山东一路2号",
-    "city": "上海",
-    "longitude": 121.490317,
-    "latitude": 31.241701,
-    "star": 5,
-    "price": 2888.0,
-    "tags": ["江景", "豪华", "外滩"],
-    "ratePlanPrices": "[{\"plan\":\"标准价\",\"price\":2888}]",
-    "ratePlanRoomSts": "{\"大床房\":\"有房\",\"双床房\":\"紧张\"}"
-  }'
-```
-
-### 读取 / 全量更新 / 部分更新 / 删除
-
-```bash
-
 curl -X "POST" 'http://127.0.0.1:9010/api/solr/health' -H 'Content-Type: application/json' 
 
 curl -X "POST" 'http://127.0.0.1:9010/api/solr/import' -H 'Content-Type: application/json' 
+```
 
-curl -X "GET" 'http://127.0.0.1:9010/api/hotels/53875' -H 'Content-Type: application/json' 
+## 详情数据
+```bash
+curl -X "GET" 'http://127.0.0.1:9010/api/hotels/53876' -H 'Content-Type: application/json' 
+```
 
+### 查询
+```bash
+
+
+
+## 城市 + 日期范围
 curl -X "POST" 'http://127.0.0.1:9010/api/hotels/query' -H 'Content-Type: application/json' \
   -d '{"cityId":"1801","checkin":"2026-10-27","checkout":"2026-10-28"}'
-
+  
 curl -X "POST" 'http://127.0.0.1:9010/api/hotels/query' -H 'Content-Type: application/json' \
   -d '{"cityId":"1801","checkin":"2026-10-27","checkout":"2026-10-30"}'
 
+## 城市 + 日期范围 + 关键字
 curl -X "POST" 'http://127.0.0.1:9010/api/hotels/query' -H 'Content-Type: application/json' \
   -d '{"cityId":"1801","checkin":"2026-10-27","checkout":"2026-10-28", "keyword":"商务"}'
-
+  
 curl -X "POST" 'http://127.0.0.1:9010/api/hotels/query' -H 'Content-Type: application/json' \
   -d '{"cityId":"1801","checkin":"2026-10-28","checkout":"2026-10-29", "keyword":"商务"}'
 
+## 城市 + 日期范围 + 价格范围 （房价过滤） + 房态(硬性要求：房态过滤)
 curl -X "POST" 'http://127.0.0.1:9010/api/hotels/query' -H 'Content-Type: application/json' \
   -d '{"cityId":"1801","checkin":"2026-10-27","checkout":"2026-10-28", "priceFrom":100, "priceTo":200}'
 
 curl -X "POST" 'http://127.0.0.1:9010/api/hotels/query' -H 'Content-Type: application/json' \
   -d '{"cityId":"1801","checkin":"2026-10-28","checkout":"2026-10-29", "priceFrom":100, "priceTo":200}'
 
+
 curl -X "POST" 'http://127.0.0.1:9010/api/hotels/query' -H 'Content-Type: application/json' \
-  -d '{"cityId":"1801","checkin":"2026-10-28","checkout":"2026-10-29", "priceFrom":100, "priceTo":200}'
+  -d '{"cityId":"1801", "hotelId":"21801032","checkin":"2026-10-28","checkout":"2026-10-29", "priceFrom":100, "priceTo":200}'  
+
+### 无房价 + 有房态
+curl -X "POST" 'http://127.0.0.1:9010/api/hotels/query' -H 'Content-Type: application/json' \
+  -d '{"cityId":"1801", "hotelId":"21801032","checkin":"2026-10-30","checkout":"2026-10-31", "priceFrom":100, "priceTo":200}'  
+
+### 有房价 + 有房态
+curl -X "POST" 'http://127.0.0.1:9010/api/hotels/query' -H 'Content-Type: application/json' \
+  -d '{"cityId":"1801", "hotelId":"21801032","checkin":"2026-10-30","checkout":"2026-10-31", "priceFrom":100, "priceTo":600}'  
+
+### 有房价 + 房态为 0
+curl -X "POST" 'http://127.0.0.1:9010/api/hotels/query' -H 'Content-Type: application/json' \
+  -d '{"cityId":"1801", "hotelId":"21801032","checkin":"2026-10-30","checkout":"2026-11-01", "priceFrom":100, "priceTo":600}'  
+
+### 连续多天 有房价 + 房态 大于0 
+curl -X "POST" 'http://127.0.0.1:9010/api/hotels/query' -H 'Content-Type: application/json' \
+  -d '{"cityId":"1801", "hotelId":"21801032","checkin":"2026-11-01","checkout":"2026-11-04", "priceFrom":100, "priceTo":600}'  
+
+curl -X "POST" 'http://127.0.0.1:9010/api/hotels/query' -H 'Content-Type: application/json' \
+  -d '{"cityId":"1801", "hotelId":"21801032","checkin":"2026-11-01","checkout":"2026-11-04" }'  
 
 fq={!frange l=100 u=200}rp_prices(rate_plan_prices, 20753, 1, 100, 200)
 dq={!frange l=100 u=500}rp_prices(rate_plan_prices, 20753, 2, 100, 500)
   
 curl -X "POST" 'http://127.0.0.1:9010/api/hotels/query' -H 'Content-Type: application/json' \
-  -d '{"cityId":"1801","checkin":"2026-10-28","checkout":"2026-10-29", "priceFrom":10, "priceTo":100}'
+  -d '{"cityId":"1801","checkin":"2026-10-30","checkout":"2026-11-03", "priceFrom":10, "priceTo":100}'
 ```
 
 ### 条件分页查询

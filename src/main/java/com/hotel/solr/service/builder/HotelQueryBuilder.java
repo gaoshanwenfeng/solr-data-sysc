@@ -2,12 +2,14 @@ package com.hotel.solr.service.builder;
 
 import com.hotel.solr.framework.exception.BusinessException;
 import com.hotel.solr.model.req.HotelRpQueryReq;
+import com.hotel.solr.service.converter.HotelRpSolrConverter;
 import com.hotel.solr.util.RpByteUtils;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.util.ClientUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -39,6 +41,7 @@ public class HotelQueryBuilder {
 
     final String TEMPLATE_FILTER_QUERY_PRICE = "{!frange l=%d u=%d}rp_prices(rate_plan_prices, %d, %d, %d, %d)";
     final String TEMPLATE_FILTER_QUERY_ROOM_STS = "{!frange l=%d}rp_room_sts(rate_plan_room_sts, %d, %d, %d)";
+    final String COMMON_FIELD_LIST =  "id,hotel_id,rate_plan_id,name,address,city_id,location,city_name,star,rate_plan_prices,rate_plan_room_sts,create_time,update_time";
 
     public HotelRpQueryReq buildQueryReq(HotelRpQueryReq q) {
         if (!StringUtils.hasText(q.getCheckin()) || !StringUtils.hasText(q.getCheckout())) {
@@ -65,6 +68,7 @@ public class HotelQueryBuilder {
         } else {
             solrQuery.setQuery("*:*");
         }
+        addRoomStsFilter(solrQuery, q.getCheckinDate(), q.getDays(), 1);
 
         if (StringUtils.hasText(q.getCityId())) {
             solrQuery.addFilterQuery("city_id:" + ClientUtils.escapeQueryChars(q.getCityId().trim()));
@@ -72,10 +76,15 @@ public class HotelQueryBuilder {
         if (q.getStar() != null) {
             solrQuery.addFilterQuery("star:" + q.getStar());
         }
+        if (q.getHotelId() != null) {
+            solrQuery.addFilterQuery(HotelRpSolrConverter.FIELD_HOTEL_ID + ":" + q.getHotelId());
+        }
         if (q.getPriceFrom() != null && q.getPriceTo() != null) {
             addPriceFilter(solrQuery, q.getCheckinDate(), q.getDays(), q.getPriceFrom(), q.getPriceTo());
         }
-        //addRoomStsFilter(solrQuery, q.getCheckinDate(), q.getDays(), 1);
+        if (q.getLocation() != null) {
+            addLocationFilter(solrQuery, q.getLocation());
+        }
 
         if (q.getTags() != null && q.getTags().size() > 1) {
             addTagFilter(solrQuery, q.getTags());
@@ -89,6 +98,30 @@ public class HotelQueryBuilder {
         solrQuery.setRows(size);
         solrQuery.setSort(resolveSort(q.getSort()));
         return solrQuery;
+    }
+
+    private void addLocationFilter(SolrQuery solrQuery, HotelRpQueryReq.LocationReq location) {
+        if (location == null || location.getLat() == null || location.getLon() == null) {
+            return;
+        }
+        String lat = location.getLat().toPlainString();
+        String lon = location.getLon().toPlainString();
+
+        // 1) 距离过滤，geofilt 走空间索引
+        solrQuery.addFilterQuery("{!geofilt sfield=" + HotelRpSolrConverter.FIELD_LOCATION + " pt=" + lat + "," + lon + " d=" + location.getDistance() + "}");
+
+        // 2) geodist() 无参形式需要的请求级参数
+        /**
+         * sfield / pt 必须放在请求参数上，不能只写在 {!geofilt ...} 里。
+         */
+        solrQuery.set("sfield", HotelRpSolrConverter.FIELD_LOCATION);
+        solrQuery.set("pt", lat + "," + lon);
+        /**
+         * 3. 距离虚拟字段
+         *   setFields("*", "dist:geodist()") 里的 * 不能省。 如果只 addField("dist:geodist()")，fl 就只剩
+         *   dist，name、rate_plan_prices 等字段全部不返回，转换器会得到空对象。
+          */
+        solrQuery.setFields("*", "dist:geodist()");
     }
 
     private String escapeKeyword(String keyword) {
@@ -153,5 +186,12 @@ public class HotelQueryBuilder {
             return SolrQuery.ORDER.desc;
         }
         throw new BusinessException(400, "不支持的排序: " + rawSort + "，方向只能是 asc 或 desc");
+    }
+
+    private static String toLocation(BigDecimal longitude, BigDecimal latitude) {
+        if (longitude == null || latitude == null) {
+            return null;
+        }
+        return latitude.toPlainString() + "," + longitude.toPlainString();
     }
 }

@@ -51,9 +51,6 @@ public class HotelRpDo {
     @Max(value = 5, message = "star 最大为 5")
     private Integer star;
 
-    @DecimalMin(value = "0", message = "price 不能为负数")
-    private Float price;
-
     private List<String> tags;
 
     /**

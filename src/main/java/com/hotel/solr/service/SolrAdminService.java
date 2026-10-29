@@ -3,6 +3,7 @@ package com.hotel.solr.service;
 import com.hotel.solr.config.SolrProperties;
 import com.hotel.solr.model.dto.SolrCoreStatusDto;
 import com.hotel.solr.framework.exception.BusinessException;
+import com.hotel.solr.model.po.HotelRpDo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.solr.client.solrj.SolrClient;
@@ -13,6 +14,7 @@ import org.apache.solr.common.SolrDocumentList;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * @author gaofeng
@@ -24,6 +26,8 @@ public class SolrAdminService {
 
     private final SolrClient solrClient;
     private final SolrProperties properties;
+    private final HotelRpDataLoader hotelRpDataLoader;
+    private final HotelRpService hotelRpService;
 
     public SolrCoreStatusDto health() {
         SolrCoreStatusDto.SolrCoreStatusDtoBuilder builder = SolrCoreStatusDto.builder()
@@ -54,10 +58,9 @@ public class SolrAdminService {
     }
 
     public void importSolrData() {
-        try {
-            solrClient.commit();
-        } catch (SolrServerException | IOException e) {
-            throw new BusinessException(502, "Solr 提交失败: " + e.getMessage(), e);
+        List<HotelRpDo> hotels = hotelRpDataLoader.loadDefault();
+        for(HotelRpDo h : hotels) {
+            hotelRpService.create(h);
         }
     }
 }

@@ -58,10 +58,8 @@
   <field name="address" type="text_ik" indexed="true" stored="true" multiValued="false"/>
   <field name="city_id" type="string" indexed="true" stored="true" multiValued="false" docValues="true"/>
   <field name="city_name" type="string" indexed="true" stored="true" multiValued="false" docValues="true"/>
-  <field name="longitude" type="pdouble" indexed="true" stored="true" multiValued="false" docValues="true"/>
-  <field name="latitude" type="pdouble" indexed="true" stored="true" multiValued="false" docValues="true"/>
+  <field name="location" type="location" indexed="true" stored="true"/>
   <field name="star" type="pint" indexed="true" stored="true" multiValued="false" docValues="true"/>
-  <field name="price" type="pfloat" indexed="true" stored="true" multiValued="false" docValues="true"/>
   <field name="tags" type="string" indexed="true" stored="true" multiValued="true"/>
   <field name="rate_plan_prices" type="string" indexed="false" stored="true" multiValued="false" docValues="true"/>
   <field name="rate_plan_room_sts" type="string" indexed="false" stored="true" multiValued="false" docValues="true"/>

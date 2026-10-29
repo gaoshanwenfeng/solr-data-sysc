@@ -28,15 +28,14 @@ public class HotelRpSolrConverter {
     public static final String FIELD_ADDRESS = "address";
     public static final String FIELD_CITY_ID = "city_id";
     public static final String FIELD_CITY_NAME = "city_name";
-    public static final String FIELD_LONGITUDE = "longitude";
-    public static final String FIELD_LATITUDE = "latitude";
+    public static final String FIELD_LOCATION = "location";
     public static final String FIELD_STAR = "star";
-    public static final String FIELD_PRICE = "price";
     public static final String FIELD_TAGS = "tags";
     public static final String FIELD_RATE_PLAN_PRICES = "rate_plan_prices";
     public static final String FIELD_RATE_PLAN_ROOM_STS = "rate_plan_room_sts";
     public static final String FIELD_CREATE_TIME = "create_time";
     public static final String FIELD_UPDATE_TIME = "update_time";
+    public static final String FIELD_V_DIST = "dist";
 
     public static SolrInputDocument toSolrDocument(HotelRpDo hotel) {
         SolrInputDocument doc = new SolrInputDocument();
@@ -46,11 +45,12 @@ public class HotelRpSolrConverter {
         addIfPresent(doc, FIELD_NAME, hotel.getName());
         addIfPresent(doc, FIELD_ADDRESS, hotel.getAddress());
         addIfPresent(doc, FIELD_CITY_ID, hotel.getCityId());
+        if (hotel.getLatitude() != null && hotel.getLongitude() != null) {
+            addIfPresent(doc, FIELD_LOCATION, toLocation(hotel.getLatitude(), hotel.getLongitude()));
+        }
+
         addIfPresent(doc, FIELD_CITY_NAME, hotel.getCityName());
-        addIfPresent(doc, FIELD_LONGITUDE, toDouble(hotel.getLongitude()));
-        addIfPresent(doc, FIELD_LATITUDE, toDouble(hotel.getLatitude()));
         addIfPresent(doc, FIELD_STAR, hotel.getStar());
-        addIfPresent(doc, FIELD_PRICE, hotel.getPrice());
         if (hotel.getTags() != null) {
             for (String tag : hotel.getTags()) {
                 if (tag != null) {
@@ -76,9 +76,9 @@ public class HotelRpSolrConverter {
     /**
      * 查询结果转换：价格计划、房态只解析本次入住区间内的数据。
      *
-     * @param document     Solr 文档
-     * @param checkinDate  入住日期
-     * @param days         入住天数（离店日期 - 入住日期）
+     * @param document    Solr 文档
+     * @param checkinDate 入住日期
+     * @param days        入住天数（离店日期 - 入住日期）
      * @return 酒店数据
      */
     public static HotelRpDto toHotelForQuery(SolrDocument document, LocalDate checkinDate, int days) {
@@ -106,13 +106,15 @@ public class HotelRpSolrConverter {
         hotelRpDto.setAddress(asString(document.getFieldValue(FIELD_ADDRESS)));
         hotelRpDto.setCityId(asString(document.getFieldValue(FIELD_CITY_ID)));
         hotelRpDto.setCityName(asString(document.getFieldValue(FIELD_CITY_NAME)));
-        hotelRpDto.setLongitude(asBigDecimal(document.getFieldValue(FIELD_LONGITUDE)));
-        hotelRpDto.setLatitude(asBigDecimal(document.getFieldValue(FIELD_LATITUDE)));
         hotelRpDto.setStar(asInteger(document.getFieldValue(FIELD_STAR)));
-        hotelRpDto.setPrice(asFloat(document.getFieldValue(FIELD_PRICE)));
+        hotelRpDto.setLocation(asString(document.getFieldValue(FIELD_LOCATION)));
         Collection<Object> tagValues = document.getFieldValues(FIELD_TAGS);
         if (tagValues != null) {
             hotelRpDto.setTags(tagValues.stream().map(String::valueOf).collect(Collectors.toList()));
+        }
+        Object dist = document.getFieldValue(FIELD_V_DIST);
+        if (dist instanceof Number) {
+            hotelRpDto.setDistance(BigDecimal.valueOf((Double) dist));
         }
         hotelRpDto.setCreateTime(asInstant(document.getFieldValue(FIELD_CREATE_TIME)));
         hotelRpDto.setUpdateTime(asInstant(document.getFieldValue(FIELD_UPDATE_TIME)));
@@ -126,10 +128,10 @@ public class HotelRpSolrConverter {
         addAtomicIfPresent(doc, FIELD_ADDRESS, patch.getAddress());
         addIfPresent(doc, FIELD_CITY_ID, patch.getCityId());
         addIfPresent(doc, FIELD_CITY_NAME, patch.getCityName());
-        addAtomicIfPresent(doc, FIELD_LONGITUDE, toDouble(patch.getLongitude()));
-        addAtomicIfPresent(doc, FIELD_LATITUDE, toDouble(patch.getLatitude()));
+        if (patch.getLatitude() != null && patch.getLongitude() != null) {
+            addIfPresent(doc, FIELD_LOCATION, toLocation(patch.getLatitude(), patch.getLongitude()));
+        }
         addAtomicIfPresent(doc, FIELD_STAR, patch.getStar());
-        addAtomicIfPresent(doc, FIELD_PRICE, patch.getPrice());
         if (patch.getTags() != null) {
             doc.setField(FIELD_TAGS, Collections.singletonMap("set", patch.getTags()));
         }
@@ -290,5 +292,12 @@ public class HotelRpSolrConverter {
             return null;
         }
         return RpByteUtils.stringToBytes(str);
+    }
+
+    private static String toLocation(BigDecimal latitude, BigDecimal longitude) {
+        if (longitude == null || latitude == null) {
+            return null;
+        }
+        return latitude.toPlainString() + "," + longitude.toPlainString();
     }
 }
