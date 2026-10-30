@@ -1,4 +1,4 @@
-package com.hotel.solr.util;
+package com.hotel.solr.framework.util;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;

@@ -3,7 +3,7 @@ package com.hotel.solr.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.hotel.solr.model.dto.SolrCoreStatusDto;
-import com.hotel.solr.framework.GlobalExceptionHandler;
+import com.hotel.solr.framework.mvc.GlobalExceptionHandler;
 import com.hotel.solr.service.SolrAdminService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

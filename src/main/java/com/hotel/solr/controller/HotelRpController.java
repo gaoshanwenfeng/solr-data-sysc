@@ -1,8 +1,8 @@
 package com.hotel.solr.controller;
 
 import com.hotel.solr.model.dto.HotelRpDto;
-import com.hotel.solr.framework.ApiResult;
-import com.hotel.solr.framework.PageResult;
+import com.hotel.solr.framework.lang.ApiResult;
+import com.hotel.solr.framework.lang.PageResult;
 import com.hotel.solr.model.po.HotelRpDo;
 import com.hotel.solr.model.req.BatchDeleteReq;
 import com.hotel.solr.model.req.BatchHotelReq;

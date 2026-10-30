@@ -47,6 +47,7 @@ public class HotelRpQueryReq {
 
     /**计算得出**/
     private LocalDate checkinDate;
+    private int offSetCheckin;
     private LocalDate checkoutDate;
     private int days = 1;
 

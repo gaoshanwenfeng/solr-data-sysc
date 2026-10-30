@@ -67,7 +67,8 @@ public class HotelRpDto {
     /**
      * 查询如果有 经纬地标+范围，需返回距离
      */
-    private BigDecimal distance;
+    private Float distance;
+    private Float avgPrice;
     @Getter
     @Setter
     public static class RpItemData {

@@ -312,11 +312,20 @@ curl -X "POST" 'http://127.0.0.1:9010/api/hotels/query' -H 'Content-Type: applic
 curl -X "POST" 'http://127.0.0.1:9010/api/hotels/query' -H 'Content-Type: application/json' \
   -d '{"cityId":"1801", "hotelId":"21801032","checkin":"2026-11-01","checkout":"2026-11-04" }'  
 
-fq={!frange l=100 u=200}rp_prices(rate_plan_prices, 20753, 1)
-fq={!frange l=100 u=500}rp_prices(rate_plan_prices, 20753, 2)
+
   
 curl -X "POST" 'http://127.0.0.1:9010/api/hotels/query' -H 'Content-Type: application/json' \
-  -d '{"cityId":"1801","checkin":"2026-10-30","checkout":"2026-11-03", "priceFrom":10, "priceTo":100}'
+  -d '{"cityId":"1801","checkin":"2026-10-30","checkout":"2026-11-03", "priceFrom":10, "priceTo":500}'
+  
+## 地理位置查询  
+curl -X "POST" 'http://127.0.0.1:9010/api/hotels/query' -H 'Content-Type: application/json' \
+  -d '{"cityId":"1801", "checkin":"2026-11-01","checkout":"2026-11-04" }' 
+
+curl -X "POST" 'http://127.0.0.1:9010/api/hotels/query' -H 'Content-Type: application/json' \
+  -d '{"cityId":"1801", "checkin":"2026-11-01","checkout":"2026-11-02" }'  
+
+curl -X "POST" 'http://127.0.0.1:9010/api/hotels/query' -H 'Content-Type: application/json' \
+  -d '{"cityId":"1801", "checkin":"2026-11-01","checkout":"2026-11-02","location":{"lat":30.620835000,"lon":114.148296000, "distance":20.0}}'    
 ```
 
 ### 条件分页查询

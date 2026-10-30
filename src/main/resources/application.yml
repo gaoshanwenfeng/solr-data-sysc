@@ -4,6 +4,8 @@ server:
 spring:
   application:
     name: hotel-solr-sysc
+  profiles:
+    active: local
   jackson:
     property-naming-strategy: LOWER_CAMEL_CASE
     default-property-inclusion: non_null

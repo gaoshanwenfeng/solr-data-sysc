@@ -3,8 +3,8 @@ package com.hotel.solr.service.converter;
 import com.hotel.solr.model.dto.HotelRpDto;
 import com.hotel.solr.model.po.HotelRpDo;
 import com.hotel.solr.model.req.HotelPatchReq;
-import com.hotel.solr.util.LocalDateUtils;
-import com.hotel.solr.util.RpByteUtils;
+import com.hotel.solr.framework.util.LocalDateUtils;
+import com.hotel.solr.framework.util.RpByteUtils;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrInputDocument;
 
@@ -36,6 +36,8 @@ public class HotelRpSolrConverter {
     public static final String FIELD_CREATE_TIME = "create_time";
     public static final String FIELD_UPDATE_TIME = "update_time";
     public static final String FIELD_V_DIST = "dist";
+    public static final String FIELD_V_RP_PRICES_AVG = "rp_prices_avg";
+    public static final String FIELD_V_RP_STS_MIN = "rp_sts_min";
 
     public static SolrInputDocument toSolrDocument(HotelRpDo hotel) {
         SolrInputDocument doc = new SolrInputDocument();
@@ -67,10 +69,6 @@ public class HotelRpSolrConverter {
             doc.setField(FIELD_UPDATE_TIME, Date.from(hotel.getUpdateTime()));
         }
         return doc;
-    }
-
-    public static HotelRpDto toHotelForQuery(SolrDocument document) {
-        return toHotel(document);
     }
 
     /**
@@ -112,10 +110,11 @@ public class HotelRpSolrConverter {
         if (tagValues != null) {
             hotelRpDto.setTags(tagValues.stream().map(String::valueOf).collect(Collectors.toList()));
         }
-        Object dist = document.getFieldValue(FIELD_V_DIST);
-        if (dist instanceof Number) {
-            hotelRpDto.setDistance(BigDecimal.valueOf((Double) dist));
-        }
+
+
+        hotelRpDto.setDistance(asFloat(document.getFieldValue(FIELD_V_DIST)));
+        hotelRpDto.setAvgPrice(asFloat(document.getFieldValue(FIELD_V_RP_PRICES_AVG)));
+
         hotelRpDto.setCreateTime(asInstant(document.getFieldValue(FIELD_CREATE_TIME)));
         hotelRpDto.setUpdateTime(asInstant(document.getFieldValue(FIELD_UPDATE_TIME)));
         return hotelRpDto;

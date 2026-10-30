@@ -1,6 +1,6 @@
 package com.hotel.solr.dto;
 
-import com.hotel.solr.framework.PageResult;
+import com.hotel.solr.framework.lang.PageResult;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;

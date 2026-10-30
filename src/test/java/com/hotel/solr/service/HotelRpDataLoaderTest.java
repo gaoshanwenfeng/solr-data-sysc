@@ -3,7 +3,7 @@ package com.hotel.solr.service;
 import com.hotel.solr.model.bo.HotelInfoRecordBo;
 import com.hotel.solr.model.dto.HotelRpDto;
 import com.hotel.solr.model.po.HotelRpDo;
-import com.hotel.solr.util.RpByteUtils;
+import com.hotel.solr.framework.util.RpByteUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,7 +17,6 @@ import java.io.InputStream;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
-import java.util.Arrays;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;

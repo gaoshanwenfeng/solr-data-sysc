@@ -1,6 +1,6 @@
 package com.hotel.solr.controller;
 
-import com.hotel.solr.framework.ApiResult;
+import com.hotel.solr.framework.lang.ApiResult;
 import com.hotel.solr.model.dto.SolrCoreStatusDto;
 import com.hotel.solr.service.SolrAdminService;
 import io.swagger.v3.oas.annotations.Operation;

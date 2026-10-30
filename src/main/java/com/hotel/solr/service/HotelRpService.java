@@ -5,7 +5,7 @@ import com.hotel.solr.model.dto.HotelRpDto;
 import com.hotel.solr.model.po.HotelRpDo;
 import com.hotel.solr.model.req.HotelPatchReq;
 import com.hotel.solr.model.req.HotelRpQueryReq;
-import com.hotel.solr.framework.PageResult;
+import com.hotel.solr.framework.lang.PageResult;
 import com.hotel.solr.framework.exception.BusinessException;
 import com.hotel.solr.service.builder.HotelQueryBuilder;
 import com.hotel.solr.service.converter.HotelRpSolrConverter;
@@ -115,7 +115,7 @@ public class HotelRpService {
     }
 
     public PageResult<HotelRpDto> query(HotelRpQueryReq query) {
-        HotelRpQueryReq queryReq = queryBuilder.buildQueryReq(query);
+        HotelRpQueryReq queryReq = queryBuilder.initQueryReq(query);
 
         SolrQuery solrQuery = queryBuilder.buildSolrQuery(queryReq);
         QueryResponse response = execute(() -> solrClient.query(solrQuery));

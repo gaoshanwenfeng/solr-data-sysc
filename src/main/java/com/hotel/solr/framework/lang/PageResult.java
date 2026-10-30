@@ -1,4 +1,4 @@
-package com.hotel.solr.framework;
+package com.hotel.solr.framework.lang;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
