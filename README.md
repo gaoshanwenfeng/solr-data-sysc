@@ -213,13 +213,6 @@ private HotelBaseDataLoader hotelBaseDataLoader;
 List<HotelDo> hotels = hotelBaseDataLoader.loadDefault();
 ```
 
-也可以指定 classpath 资源、文件路径或输入流：
-
-```java
-List<HotelDo> hotels = hotelBaseDataLoader.loadClasspath("dih-hotel-rp.json");
-List<HotelDo> hotels = hotelBaseDataLoader.load(Paths.get("/data/dih-hotel-rp.json"));
-List<HotelBaseRecord> records = hotelBaseDataLoader.read(Paths.get("/data/dih-hotel-rp.json"));
-```
 
 字段映射：
 
@@ -256,7 +249,9 @@ List<HotelBaseRecord> records = hotelBaseDataLoader.read(Paths.get("/data/dih-ho
 ```bash
 curl -X "POST" 'http://127.0.0.1:9010/api/solr/health' -H 'Content-Type: application/json' 
 
-curl -X "POST" 'http://127.0.0.1:9010/api/solr/import' -H 'Content-Type: application/json' 
+curl -X "POST" 'http://127.0.0.1:9010/api/hotels/import' -H 'Content-Type: application/json' 
+
+curl -X "POST" 'http://127.0.0.1:9010/api/rp/import' -H 'Content-Type: application/json' 
 ```
 
 ## 详情数据
@@ -326,6 +321,14 @@ curl -X "POST" 'http://127.0.0.1:9010/api/hotels/query' -H 'Content-Type: applic
 
 curl -X "POST" 'http://127.0.0.1:9010/api/hotels/query' -H 'Content-Type: application/json' \
   -d '{"cityId":"1801", "checkin":"2026-11-01","checkout":"2026-11-02","location":{"lat":30.620835000,"lon":114.148296000, "distance":20.0}}'    
+
+
+### 分组查询
+curl -X "POST" 'http://127.0.0.1:9010/api/rp/query' -H 'Content-Type: application/json' \
+  -d '{"cityId":"0301","checkin":"2026-10-27","checkout":"2026-10-28", "priceFrom":10, "priceTo":500}'
+
+curl -X "POST" 'http://127.0.0.1:9010/api/rp/query' -H 'Content-Type: application/json' \
+  -d '{"cityId":"0301", "checkin":"2026-10-27","checkout":"2026-10-28", "priceFrom":10, "priceTo":500}'  
 ```
 
 ### 条件分页查询
@@ -357,6 +360,7 @@ curl http://localhost:8080/api/solr/health
 curl -X POST http://localhost:8080/api/solr/commit
 ```
 
+
 ## 六、测试
 
 ```bash
@@ -385,7 +389,7 @@ fq={!frange l=10 u=300}rp_prices(rate_plan_prices, 20753, 2)
 fq={!frange l=200 u=300}rp_prices(rate_plan_prices, 20754, 2)
 fq={!frange l=10 u=50}rp_prices(rate_plan_prices, 20753, 2)
 fq={!frange l=10 u=50}rp_prices(rate_plan_prices, 20753, 5)
-fq={!frange l=10 u=50}rp_prices(rate_plan_prices, 20753, 10)
+fq={!frange l=100 u=500}rp_prices(rate_plan_prices, 20753, 10)
 ## 九、常见问题
 
 | 现象 | 处理 |

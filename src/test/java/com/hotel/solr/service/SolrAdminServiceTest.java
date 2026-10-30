@@ -38,7 +38,7 @@ class SolrAdminServiceTest {
     void setUp() {
         SolrProperties properties = new SolrProperties();
         properties.setBaseUrl("http://localhost:8983/solr/");
-        properties.setCore("hotel");
+        properties.setCore("hotel_rp");
         service = new SolrAdminService(solrClient, properties);
     }
 

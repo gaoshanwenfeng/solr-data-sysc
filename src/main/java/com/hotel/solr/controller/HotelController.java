@@ -32,9 +32,17 @@ import javax.validation.Valid;
 @RequiredArgsConstructor
 @Validated
 @Tag(name = "酒店数据管理", description = "Solr 酒店文档的增删改查")
-public class HotelRpController {
+public class HotelController {
 
     private final HotelRpService hotelRpService;
+
+    @PostMapping("/import")
+    @Operation(summary = "手动提交（commit）")
+    public ApiResult<Void> dataHotelRoImport() {
+        hotelRpService.initCoreData();
+        return ApiResult.ok();
+    }
+
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)

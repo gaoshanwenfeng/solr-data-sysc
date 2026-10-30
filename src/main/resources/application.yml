@@ -15,8 +15,6 @@ spring:
 solr:
   # Solr 服务地址（standalone 模式），后续按实际环境修改
   base-url: http://localhost:8983/solr
-  # core 名称
-  core: hotel_rp
   connection-timeout-ms: 5000
   socket-timeout-ms: 15000
   # 写操作后是否立即 commit（数据量小、要求读己之写时保持 true）

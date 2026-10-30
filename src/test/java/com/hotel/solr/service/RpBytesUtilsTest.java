@@ -2,6 +2,7 @@ package com.hotel.solr.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hotel.solr.model.po.HotelRpDo;
+import com.hotel.solr.util.DataLoader;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,13 +21,13 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class RpBytesUtilsTest {
 
     @Autowired
-    private HotelRpDataLoader loader;
+    private DataLoader loader;
 
     private List<HotelRpDo> hotels;
 
     void loadHotels() {
         ObjectMapper objectMapper = new ObjectMapper();
-        HotelRpDataLoader loader = new HotelRpDataLoader(objectMapper);
+        DataLoader loader = new DataLoader(objectMapper);
         hotels = loader.loadDefault();
     }
 

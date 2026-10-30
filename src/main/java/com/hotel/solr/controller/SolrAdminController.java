@@ -44,11 +44,5 @@ public class SolrAdminController {
         return ApiResult.ok();
     }
 
-    @PostMapping("/import")
-    @Operation(summary = "手动提交（commit）")
-    public ApiResult<Void> dataImport() {
-        solrAdminService.importSolrData();
-        return ApiResult.ok();
-    }
 
 }

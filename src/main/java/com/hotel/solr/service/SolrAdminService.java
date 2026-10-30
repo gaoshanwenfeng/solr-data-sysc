@@ -3,35 +3,38 @@ package com.hotel.solr.service;
 import com.hotel.solr.config.SolrProperties;
 import com.hotel.solr.model.dto.SolrCoreStatusDto;
 import com.hotel.solr.framework.exception.BusinessException;
-import com.hotel.solr.model.po.HotelRpDo;
-import lombok.RequiredArgsConstructor;
+import com.hotel.solr.util.DataLoader;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocumentList;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.List;
 
 /**
  * @author gaofeng
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class SolrAdminService {
 
     private final SolrClient solrClient;
     private final SolrProperties properties;
-    private final HotelRpDataLoader hotelRpDataLoader;
-    private final HotelRpService hotelRpService;
+
+    public SolrAdminService(@Qualifier("hotelSolrCoreClient") SolrClient solrClient,
+                            SolrProperties properties,
+                            HotelRpService hotelRpService, RatePlanService ratePlanService) {
+        this.solrClient = solrClient;
+        this.properties = properties;
+    }
 
     public SolrCoreStatusDto health() {
         SolrCoreStatusDto.SolrCoreStatusDtoBuilder builder = SolrCoreStatusDto.builder()
-                .solrUrl(properties.coreUrl())
+                .solrUrl(properties.hotelCoreUrl())
                 .core(properties.getCore());
         try {
             SolrQuery query = new SolrQuery();
@@ -57,10 +60,4 @@ public class SolrAdminService {
         }
     }
 
-    public void importSolrData() {
-        List<HotelRpDo> hotels = hotelRpDataLoader.loadDefault();
-        for(HotelRpDo h : hotels) {
-            hotelRpService.create(h);
-        }
-    }
 }

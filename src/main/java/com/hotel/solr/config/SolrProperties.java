@@ -27,10 +27,18 @@ public class SolrProperties {
     private boolean commitAfterWrite = true;
 
     /**
-     * 当前 core 的完整访问地址
+     * 当前 hotel 的完整访问地址
      */
-    public String coreUrl() {
+    public String hotelCoreUrl() {
         String base = baseUrl == null ? "" : baseUrl.replaceAll("/+$", "");
-        return base + "/" + core;
+        return base + "/" + "hotel_rp";
+    }
+
+    /**
+     * 当前 RatePlan 的完整访问地址
+     */
+    public String ratePlanCoreUrl() {
+        String base = baseUrl == null ? "" : baseUrl.replaceAll("/+$", "");
+        return base + "/" + "hotel_rps_core";
     }
 }

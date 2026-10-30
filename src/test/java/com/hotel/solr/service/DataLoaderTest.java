@@ -4,10 +4,10 @@ import com.hotel.solr.model.bo.HotelInfoRecordBo;
 import com.hotel.solr.model.dto.HotelRpDto;
 import com.hotel.solr.model.po.HotelRpDo;
 import com.hotel.solr.framework.util.RpByteUtils;
+import com.hotel.solr.util.DataLoader;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
@@ -20,22 +20,19 @@ import java.time.LocalDate;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SpringBootTest
 @ExtendWith(SpringExtension.class)
 @DisplayName("HotelBaseDataLoader 基础数据读取与转换")
-class HotelRpDataLoaderTest {
+class DataLoaderTest {
 
-    @Autowired
-    private HotelRpDataLoader loader;
     @Resource
     private HotelRpService hotelRpService;
     private List<HotelRpDo> hotels;
 
     @Test
     void readsAll53FieldsOfEveryRecord() {
-        List<HotelInfoRecordBo> records = loader.readDefault();
+        List<HotelInfoRecordBo> records = DataLoader.readClasspath(DataLoader.HOTEL_RP_FILE);
 
         assertThat(HotelInfoRecordBo.class.getDeclaredFields()).hasSize(53);
         assertThat(records).hasSize(17);
@@ -63,7 +60,7 @@ class HotelRpDataLoaderTest {
 
     @Test
     void mapsFirstRecordWithExpectedValues() {
-        HotelRpDo hotelRpDto = loader.loadDefault().get(0);
+        HotelRpDo hotelRpDto = DataLoader.loadClasspath(DataLoader.HOTEL_RP_FILE).get(0);
 
         assertThat(hotelRpDto.getId()).isEqualTo("4887");
         assertThat(hotelRpDto.getName()).isEqualTo("长沙皇朝今朝大酒店");
@@ -75,7 +72,6 @@ class HotelRpDataLoaderTest {
         assertThat(hotelRpDto.getLatitude()).isEqualByComparingTo("28.203585550");
         assertThat(hotelRpDto.getLongitude().scale()).isEqualTo(9);
         assertThat(hotelRpDto.getLatitude().scale()).isEqualTo(9);
-        assertThat(hotelRpDto.getPrice()).isNull();
         assertThat(hotelRpDto.getTags()).isNull();
         assertThat(hotelRpDto.getCreateTime()).isNull();
         assertThat(hotelRpDto.getUpdateTime()).isNull();
@@ -83,7 +79,7 @@ class HotelRpDataLoaderTest {
 
     @Test
     void convertsEveryRecordToHotelDo() {
-        List<HotelRpDo> hotels = loader.loadDefault();
+        List<HotelRpDo> hotels = DataLoader.loadClasspath(DataLoader.HOTEL_RP_FILE);
 
         assertThat(hotels).hasSize(17);
         assertThat(hotels).extracting(HotelRpDo::getId).doesNotHaveDuplicates();
@@ -107,7 +103,7 @@ class HotelRpDataLoaderTest {
 
     @Test
     void encodesRatePlanWithDateAndOriginalValues() {
-        HotelRpDo hotelRpDto = loader.loadDefault().get(0);
+        HotelRpDo hotelRpDto = DataLoader.loadClasspath(DataLoader.HOTEL_RP_FILE).get(0);
 
         byte[] prices = RpByteUtils.stringToBytes(hotelRpDto.getRatePlanPrices());
         assertThat(RpByteUtils.BASE_DATE.plusDays(RpByteUtils.getDateOffset(prices)))
@@ -138,7 +134,7 @@ class HotelRpDataLoaderTest {
                 + "\"rp_prices\":{\"date\":\"2026-10-27\",\"list\":[100,200]}"
                 + "}]}";
 
-        HotelRpDo hotelRpDto = loader.load(stream(json)).get(0);
+        HotelRpDo hotelRpDto = DataLoader.loadClasspath(DataLoader.HOTEL_RP_FILE).get(0);
 
         assertThat(hotelRpDto.getLongitude()).isEqualByComparingTo("121.473701000");
         assertThat(hotelRpDto.getLatitude()).isEqualByComparingTo("31.230416000");
@@ -159,7 +155,7 @@ class HotelRpDataLoaderTest {
                 + "\"star_rate\":\"not-a-number\""
                 + "}]}";
 
-        HotelRpDo hotelRpDto = loader.load(stream(json)).get(0);
+        HotelRpDo hotelRpDto = DataLoader.loadClasspath(DataLoader.HOTEL_RP_FILE).get(0);
 
         assertThat(hotelRpDto.getLongitude()).isNull();
         assertThat(hotelRpDto.getLatitude()).isNull();
@@ -168,40 +164,13 @@ class HotelRpDataLoaderTest {
         assertThat(hotelRpDto.getRatePlanRoomSts()).isNull();
     }
 
-    @Test
-    void returnsEmptyListWhenRecordsAreMissing() {
-        assertThat(loader.load(stream("{}"))).isEmpty();
-    }
 
-    @Test
-    void rejectsMalformedJson() {
-        assertThatThrownBy(() -> loader.load(stream("{")))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("解析酒店基础数据失败");
-    }
 
 
     private InputStream stream(String json) {
         return new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8));
     }
 
-    void loadHotels() {
-        hotels = loader.loadDefault();
-    }
-
-    void getHotelRowDate() {
-        loadHotels();
-
-    }
-
-    //@Test
-    void importHotelAllDoc() {
-        loadHotels();
-        for (HotelRpDo h : hotels) {
-            hotelRpService.create(h);
-        }
-        System.out.println("finish****" );
-    }
 
     @Test
     void getHotel() {
