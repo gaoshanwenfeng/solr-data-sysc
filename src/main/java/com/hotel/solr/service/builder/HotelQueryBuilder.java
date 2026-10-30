@@ -39,8 +39,8 @@ public class HotelQueryBuilder {
         SORT_ORDERS = Collections.unmodifiableMap(orders);
     }
 
-    final String TEMPLATE_FILTER_QUERY_PRICE = "{!frange l=%d u=%d}rp_prices(rate_plan_prices, %d, %d, %d, %d)";
-    final String TEMPLATE_FILTER_QUERY_ROOM_STS = "{!frange l=%d}rp_room_sts(rate_plan_room_sts, %d, %d, %d)";
+    final String TEMPLATE_FILTER_QUERY_PRICE = "{!frange l=%d u=%d}fq_rp_prices(rate_plan_prices, %d, %d)";
+    final String TEMPLATE_FILTER_QUERY_ROOM_STS = "{!frange l=%d}fq_rp_sts(rate_plan_room_sts, %d, %d)";
     final String COMMON_FIELD_LIST =  "id,hotel_id,rate_plan_id,name,address,city_id,location,city_name,star,rate_plan_prices,rate_plan_room_sts,create_time,update_time";
 
     public HotelRpQueryReq buildQueryReq(HotelRpQueryReq q) {
@@ -139,7 +139,7 @@ public class HotelQueryBuilder {
         if (days < 1) {
             days = 1;
         }
-        solrQuery.addFilterQuery(String.format(TEMPLATE_FILTER_QUERY_PRICE, minPrice, maxPrice, offsetDay, days, minPrice, maxPrice));
+        solrQuery.addFilterQuery(String.format(TEMPLATE_FILTER_QUERY_PRICE, minPrice, maxPrice, offsetDay, days));
     }
 
     private void addRoomStsFilter(SolrQuery solrQuery, LocalDate date, int days, int num) {
@@ -147,7 +147,10 @@ public class HotelQueryBuilder {
         if (days < 1) {
             days = 1;
         }
-        solrQuery.addFilterQuery(String.format(TEMPLATE_FILTER_QUERY_ROOM_STS, num, offsetDay, days, num));
+        if (num < 1) {
+            num = 1;
+        }
+        solrQuery.addFilterQuery(String.format(TEMPLATE_FILTER_QUERY_ROOM_STS, num, offsetDay, days));
     }
 
     private void addTagFilter(SolrQuery solrQuery, List<String> tags) {

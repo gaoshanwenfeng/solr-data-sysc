@@ -400,33 +400,29 @@ public final class RpByteUtils {
     /**
      * 功能说明：按 {@code [daysOffset, count, num...]} 布局编码字节数组。
      *
-     * <p><strong>注意：当前实现与上述布局不一致：</strong>非空输入只分配了
-     * {@code values.length * 4} 字节，空输入固定分配 8 字节；count 写在 offset 1
-     * 而不是 {@link #UNIT_NUM}，从 offset 0 开始写。
-     * 非空输入可能覆盖头部或抛出 ArrayIndexOutOfBoundsException，使用前需要修复。
+     * <p>数量超过 {@link #DATA_MAX_NUM} 时会截断到该上限。
      *
      * @param offsetDte 天数偏移
      * @param values    数组，允许为 null 或空数组
-     * @return 编码后的字节数组
-     * @throws ArrayIndexOutOfBoundsException 当前实现下非空 values 可能触发
+     * @return 编码后的字节数组，长度为 {@code (2 + 数量) * 4}
      * @author gaofeng
      * @date 2026/10/26
      */
     public static byte[] intArrToBytes(int offsetDte, int... values) {
         if (values == null || values.length < 1) {
-            byte[] bytes = new byte[2 << RpByteUtils.UNIT_SHIFT];
+            byte[] bytes = new byte[HEADER_UNITS << RpByteUtils.UNIT_SHIFT];
             RpByteUtils.writeInt(bytes, 0, offsetDte);
-            RpByteUtils.writeInt(bytes, 1, 0);
+            RpByteUtils.writeInt(bytes, UNIT_NUM, 0);
             return bytes;
         }
         if (values.length > DATA_MAX_NUM) {
             values = Arrays.copyOf(values, DATA_MAX_NUM);
         }
-        byte[] bytes = new byte[values.length << RpByteUtils.UNIT_SHIFT];
+        byte[] bytes = new byte[(HEADER_UNITS + values.length) << RpByteUtils.UNIT_SHIFT];
         RpByteUtils.writeInt(bytes, 0, offsetDte);
-        RpByteUtils.writeInt(bytes, 1, values.length);
+        RpByteUtils.writeInt(bytes, UNIT_NUM, values.length);
         for (int i = 0; i < values.length; i++) {
-            RpByteUtils.writeInt(bytes, i << RpByteUtils.UNIT_SHIFT, values[i]);
+            RpByteUtils.writeInt(bytes, DATA_OFFSET + (i << RpByteUtils.UNIT_SHIFT), values[i]);
         }
         return bytes;
     }

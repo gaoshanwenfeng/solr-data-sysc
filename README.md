@@ -268,7 +268,6 @@ curl -X "GET" 'http://127.0.0.1:9010/api/hotels/53876' -H 'Content-Type: applica
 ```bash
 
 
-
 ## 城市 + 日期范围
 curl -X "POST" 'http://127.0.0.1:9010/api/hotels/query' -H 'Content-Type: application/json' \
   -d '{"cityId":"1801","checkin":"2026-10-27","checkout":"2026-10-28"}'
@@ -313,8 +312,8 @@ curl -X "POST" 'http://127.0.0.1:9010/api/hotels/query' -H 'Content-Type: applic
 curl -X "POST" 'http://127.0.0.1:9010/api/hotels/query' -H 'Content-Type: application/json' \
   -d '{"cityId":"1801", "hotelId":"21801032","checkin":"2026-11-01","checkout":"2026-11-04" }'  
 
-fq={!frange l=100 u=200}rp_prices(rate_plan_prices, 20753, 1, 100, 200)
-dq={!frange l=100 u=500}rp_prices(rate_plan_prices, 20753, 2, 100, 500)
+fq={!frange l=100 u=200}rp_prices(rate_plan_prices, 20753, 1)
+fq={!frange l=100 u=500}rp_prices(rate_plan_prices, 20753, 2)
   
 curl -X "POST" 'http://127.0.0.1:9010/api/hotels/query' -H 'Content-Type: application/json' \
   -d '{"cityId":"1801","checkin":"2026-10-30","checkout":"2026-11-03", "priceFrom":10, "priceTo":100}'
@@ -322,18 +321,6 @@ curl -X "POST" 'http://127.0.0.1:9010/api/hotels/query' -H 'Content-Type: applic
 
 ### 条件分页查询
 
-```bash
-curl -G http://localhost:8080/api/hotelRpDtos \
-  --data-urlencode 'keyword=外滩' \
-  --data-urlencode 'city=上海' \
-  --data-urlencode 'star=5' \
-  --data-urlencode 'min_price=1000' \
-  --data-urlencode 'max_price=5000' \
-  --data-urlencode 'tags=江景' \
-  --data-urlencode 'sort=price desc' \
-  --data-urlencode 'page=1' \
-  --data-urlencode 'size=10'
-```
 
 参数说明：
 
@@ -349,18 +336,7 @@ curl -G http://localhost:8080/api/hotelRpDtos \
 
 ### 批量操作
 
-```bash
-curl -X POST http://localhost:8080/api/hotelRpDtos/batch \
-  -H 'Content-Type: application/json' \
-  -d '{"hotels":[
-    {"id":"h-1002","name":"上海和平饭店","city":"上海","star":5,"price":1888},
-    {"id":"h-1003","name":"北京王府井酒店","city":"北京","star":5,"price":1588}
-  ]}'
 
-curl -X POST http://localhost:8080/api/hotelRpDtos/batch-delete \
-  -H 'Content-Type: application/json' \
-  -d '{"ids":["h-1002","h-1003"]}'
-```
 
 ### Solr 运维
 
@@ -396,11 +372,11 @@ Gradle Wrapper 的发行包地址已切换为腾讯云镜像。
 ## 查询样例
 df=rp_prices(rate_plan_prices, 20753, 2, 10, 300)
 fq={!frange l=10}myCustomLen(title)
-fq={!frange l=10 u=300}rp_prices(rate_plan_prices, 20753, 2, 10, 300)
-fq={!frange l=200 u=300}rp_prices(rate_plan_prices, 20754, 2, 200, 300)
-fq={!frange l=10 u=50}rp_prices(rate_plan_prices, 20753, 2, 10, 50)
-fq={!frange l=10 u=50}rp_prices(rate_plan_prices, 20753, 5, 10, 50)
-fq={!frange l=10 u=50}rp_prices(rate_plan_prices, 20753, 10, 10, 50)
+fq={!frange l=10 u=300}rp_prices(rate_plan_prices, 20753, 2)
+fq={!frange l=200 u=300}rp_prices(rate_plan_prices, 20754, 2)
+fq={!frange l=10 u=50}rp_prices(rate_plan_prices, 20753, 2)
+fq={!frange l=10 u=50}rp_prices(rate_plan_prices, 20753, 5)
+fq={!frange l=10 u=50}rp_prices(rate_plan_prices, 20753, 10)
 ## 九、常见问题
 
 | 现象 | 处理 |
