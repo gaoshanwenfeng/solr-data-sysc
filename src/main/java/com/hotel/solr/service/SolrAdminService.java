@@ -26,8 +26,7 @@ public class SolrAdminService {
     private final SolrProperties properties;
 
     public SolrAdminService(@Qualifier("hotelSolrCoreClient") SolrClient solrClient,
-                            SolrProperties properties,
-                            HotelRpService hotelRpService, RatePlanService ratePlanService) {
+                            SolrProperties properties) {
         this.solrClient = solrClient;
         this.properties = properties;
     }

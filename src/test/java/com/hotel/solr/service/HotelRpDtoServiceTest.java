@@ -121,8 +121,8 @@ class HotelRpDtoServiceTest {
 
         ArgumentCaptor<SolrInputDocument> captor = ArgumentCaptor.forClass(SolrInputDocument.class);
         verify(solrClient).add(captor.capture());
-        assertThat(captor.getValue().getFieldValue("longitude")).isEqualTo(121.473701d);
-        assertThat(captor.getValue().getFieldValue("latitude")).isEqualTo(31.230416d);
+        assertThat(captor.getValue().getFieldValue("location"))
+                .isEqualTo("31.230416,121.473701");
         assertThat(saved.getLongitude()).isEqualByComparingTo("121.473701");
         assertThat(saved.getLatitude()).isEqualByComparingTo("31.230416");
     }
@@ -236,7 +236,6 @@ class HotelRpDtoServiceTest {
         stubQueryResult(solrDocument("h1"));
         HotelPatchReq patch = new HotelPatchReq();
         patch.setName("新名字");
-        patch.setPrice(888.0f);
 
         HotelRpDto result = service.patch("h1", patch);
 
@@ -247,7 +246,6 @@ class HotelRpDtoServiceTest {
         SolrInputDocument doc = captor.getValue();
         assertThat(doc.getFieldValue("id")).isEqualTo("h1");
         assertThat(doc.getFieldValue("name")).isEqualTo(Collections.singletonMap("set", "新名字"));
-        assertThat(doc.getFieldValue("price")).isEqualTo(Collections.singletonMap("set", 888.0f));
         assertThat((Map<String, Object>) doc.getFieldValue("update_time")).containsKey("set");
     }
 
@@ -263,7 +261,7 @@ class HotelRpDtoServiceTest {
     }
 
     @Test
-    void patchAppliesCoordinatesAsAtomicSet() throws Exception {
+    void patchAppliesCoordinatesAsLocation() throws Exception {
         stubQueryResult(solrDocument("h1"));
         HotelPatchReq patch = new HotelPatchReq();
         patch.setLongitude(new BigDecimal("121.473701"));
@@ -273,10 +271,8 @@ class HotelRpDtoServiceTest {
 
         ArgumentCaptor<SolrInputDocument> captor = ArgumentCaptor.forClass(SolrInputDocument.class);
         verify(solrClient).add(captor.capture());
-        assertThat(captor.getValue().getFieldValue("longitude"))
-                .isEqualTo(Collections.singletonMap("set", 121.473701d));
-        assertThat(captor.getValue().getFieldValue("latitude"))
-                .isEqualTo(Collections.singletonMap("set", 31.230416d));
+        assertThat(captor.getValue().getFieldValue("location"))
+                .isEqualTo("31.230416,121.473701");
     }
 
     @Test

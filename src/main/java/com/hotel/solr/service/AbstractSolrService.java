@@ -49,7 +49,7 @@ public abstract class AbstractSolrService {
         this.queryBuilder = queryBuilder;
     }
 
-    public abstract void  initCoreData();
+    public abstract void initCoreData();
 
     public HotelRpDo create(HotelRpDo hotel) {
         validateHotel(hotel, true);
@@ -130,20 +130,39 @@ public abstract class AbstractSolrService {
     public PageResult<HotelRpDto> query(HotelRpQueryReq query) {
         HotelRpQueryReq queryReq = queryBuilder.initQueryReq(query);
 
-        SolrQuery solrQuery = queryBuilder.buildSolrQuery(queryReq);
+        SolrQuery solrQuery = buildSolrQuery(queryReq);
         QueryResponse response = execute(() -> solrClient.query(solrQuery));
-        SolrDocumentList results = response.getResults();
 
         int size = solrQuery.getRows();
         int page = solrQuery.getStart() / size + 1;
-        List<HotelRpDto> items = results == null
-                ? Collections.emptyList()
-                : results.stream()
-                        .map(document -> HotelRpSolrConverter.toHotelForQuery(
-                                document, queryReq.getCheckinDate(), queryReq.getDays()))
-                        .collect(Collectors.toList());
-        long total = results == null ? 0 : results.getNumFound();
-        return PageResult.of(total, page, size, items);
+        List<HotelRpDto> items = extractDocuments(response).stream()
+                .map(document -> HotelRpSolrConverter.toHotelForQuery(
+                        document, queryReq.getCheckinDate(), queryReq.getDays()))
+                .collect(Collectors.toList());
+        return PageResult.of(extractTotal(response), page, size, items);
+    }
+
+    /**
+     * 构建查询条件，子类可按需追加参数（如分组查询）。
+     */
+    protected SolrQuery buildSolrQuery(HotelRpQueryReq queryReq) {
+        return queryBuilder.buildSolrQuery(queryReq);
+    }
+
+    /**
+     * 提取当前页的文档。默认取普通查询结果，分组查询的子类可覆盖为每组的代表文档。
+     */
+    protected List<SolrDocument> extractDocuments(QueryResponse response) {
+        SolrDocumentList results = response.getResults();
+        return results == null ? Collections.emptyList() : new ArrayList<>(results);
+    }
+
+    /**
+     * 提取总记录数。默认取普通查询的 numFound，分组查询的子类可覆盖为分组总数。
+     */
+    protected long extractTotal(QueryResponse response) {
+        SolrDocumentList results = response.getResults();
+        return results == null ? 0 : results.getNumFound();
     }
 
     public int saveBatch(List<HotelRpDo> docPoList) {

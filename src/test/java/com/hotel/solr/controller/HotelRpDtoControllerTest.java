@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.hotel.solr.model.dto.HotelRpDto;
+import com.hotel.solr.model.enums.SortOrder;
+import com.hotel.solr.model.enums.SortType;
 import com.hotel.solr.model.po.HotelRpDo;
 import com.hotel.solr.model.req.HotelPatchReq;
 import com.hotel.solr.model.req.HotelRpQueryReq;
@@ -76,7 +78,7 @@ class HotelRpDtoControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"id\":\"h1\",\"name\":\"外滩酒店\",\"cityId\":\"1901\","
                                 + "\"cityName\":\"上海\",\"star\":5,"
-                                + "\"price\":1299.5,\"tags\":[\"江景\"],"
+                                + "\"tags\":[\"江景\"],"
                                 + "\"ratePlanPrices\":\"[]\",\"ratePlanRoomSts\":\"{}\"}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.code").value(0))
@@ -228,7 +230,7 @@ class HotelRpDtoControllerTest {
                         .content("{\"keyword\":\"上海\",\"cityId\":\"1901\","
                                 + "\"checkin\":\"2026-10-27\",\"checkout\":\"2026-10-28\","
                                 + "\"star\":5,\"priceFrom\":100,\"priceTo\":500,"
-                                + "\"tags\":[\"江景\",\"豪华\"],\"sort\":\"price asc\","
+                                + "\"tags\":[\"江景\",\"豪华\"],\"sortType\":\"PRICE\",\"sortOrder\":\"DESC\","
                                 + "\"page\":2,\"size\":20}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.page").value(2))
@@ -245,7 +247,8 @@ class HotelRpDtoControllerTest {
         assertThat(query.getPriceFrom()).isEqualTo(100);
         assertThat(query.getPriceTo()).isEqualTo(500);
         assertThat(query.getTags()).containsExactly("江景", "豪华");
-        assertThat(query.getSort()).isEqualTo("price asc");
+        assertThat(query.getSortType()).isEqualTo(SortType.PRICE);
+        assertThat(query.getSortOrder()).isEqualTo(SortOrder.DESC);
         assertThat(query.getPage()).isEqualTo(2);
         assertThat(query.getSize()).isEqualTo(20);
     }

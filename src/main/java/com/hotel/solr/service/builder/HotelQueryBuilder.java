@@ -2,6 +2,8 @@ package com.hotel.solr.service.builder;
 
 import com.hotel.solr.framework.exception.BusinessException;
 import com.hotel.solr.framework.util.RpByteUtils;
+import com.hotel.solr.model.enums.SortOrder;
+import com.hotel.solr.model.enums.SortType;
 import com.hotel.solr.model.req.HotelRpQueryReq;
 import com.hotel.solr.service.converter.HotelRpSolrConverter;
 import lombok.extern.slf4j.Slf4j;
@@ -29,18 +31,13 @@ public class HotelQueryBuilder {
 
     private static final int DEFAULT_PAGE_SIZE = 10;
     private static final int MAX_PAGE_SIZE = 200;
-    private static final String DEFAULT_SORT = "score desc";
 
-    private static final Map<String, SolrQuery.ORDER> SORT_ORDERS;
-
-    static {
-        Map<String, SolrQuery.ORDER> orders = new LinkedHashMap<>();
-        orders.put("score", SolrQuery.ORDER.desc);
-        orders.put("star", SolrQuery.ORDER.desc);
-        orders.put("update_time", SolrQuery.ORDER.desc);
-        orders.put("create_time", SolrQuery.ORDER.desc);
-        SORT_ORDERS = Collections.unmodifiableMap(orders);
-    }
+    private static final String DISTANCE_SORT_FIELD = "geodist()";
+    private static final String SCORE_SORT_FIELD = "score";
+    /**
+     * 排序表达式中的函数不能带空格：sort 参数用逗号分隔多个排序子句。
+     */
+    private static final String SORT_PRICE_FUNCTION = "fq_rp_prices(rate_plan_prices,%d,%d)";
 
     final String TEMPLATE_FILTER_QUERY_PRICE = "{!frange l=%d u=%d}fq_rp_prices(rate_plan_prices, %d, %d)";
     final String TEMPLATE_FILTER_QUERY_ROOM_STS = "{!frange l=%d}fq_rp_sts(rate_plan_room_sts, %d, %d)";
@@ -100,8 +97,12 @@ public class HotelQueryBuilder {
             addRoomStsFilter(solrQuery, q.getCheckinDate(), q.getDays(), 1);
             solrQuery.addField(HotelRpSolrConverter.FIELD_V_RP_STS_MIN +
                     ":" + String.format(FUNCTION_ROOM_STS, q.getOffSetCheckin(), q.getDays()));
-            if (q.getPriceFrom() != null && q.getPriceTo() != null) {
+            boolean priceFiltered = q.getPriceFrom() != null && q.getPriceTo() != null;
+            if (priceFiltered) {
                 addPriceFilter(solrQuery, q.getCheckinDate(), q.getDays(), q.getPriceFrom(), q.getPriceTo());
+            }
+            // 价格排序时也需要返回平均价，供前端展示排序依据
+            if (priceFiltered || q.getSortType() == SortType.PRICE) {
                 solrQuery.addField(HotelRpSolrConverter.FIELD_V_RP_PRICES_AVG +
                         ":" + String.format(FUNCTION_PRICE, q.getOffSetCheckin(), q.getDays()));
             }
@@ -122,7 +123,7 @@ public class HotelQueryBuilder {
                 : Math.min(MAX_PAGE_SIZE, Math.max(1, q.getSize()));
         solrQuery.setStart((page - 1) * size);
         solrQuery.setRows(size);
-        solrQuery.setSort(resolveSort(q.getSort()));
+        solrQuery.setSort(resolveSort(q));
         log.info(" Solr查询 QueryString: {}", solrQuery.toQueryString());
         return solrQuery;
     }
@@ -192,28 +193,46 @@ public class HotelQueryBuilder {
         }
     }
 
-    private SolrQuery.SortClause resolveSort(String sort) {
-        if (!StringUtils.hasText(sort)) {
-            return SolrQuery.SortClause.create("score", SolrQuery.ORDER.desc);
+    /**
+     * 解析排序：显式 sortType 优先；未指定时携带 location 按距离，否则按相关度评分。
+     * PRICE 和 STAR 支持 sortOrder 指定方向，距离与评分方向固定。
+     */
+    private SolrQuery.SortClause resolveSort(HotelRpQueryReq q) {
+        SortType sortType = q.getSortType() == null
+                ? (hasLocation(q) ? SortType.DISTANCE : SortType.SCORE)
+                : q.getSortType();
+        switch (sortType) {
+            case DISTANCE:
+                if (!hasLocation(q)) {
+                    throw new BusinessException(400, "按距离排序需要提供 location 信息");
+                }
+                return SolrQuery.SortClause.create(DISTANCE_SORT_FIELD, SolrQuery.ORDER.asc);
+            case PRICE:
+                return SolrQuery.SortClause.create(priceSortField(q), resolveOrder(q, SolrQuery.ORDER.asc));
+            case STAR:
+                return SolrQuery.SortClause.create(HotelRpSolrConverter.FIELD_STAR,
+                        resolveOrder(q, SolrQuery.ORDER.desc));
+            case SCORE:
+            default:
+                return SolrQuery.SortClause.create(SCORE_SORT_FIELD, SolrQuery.ORDER.desc);
         }
-        String[] parts = sort.trim().toLowerCase(Locale.ROOT).split("\\s+");
-        if (parts.length > 2 || !SORT_ORDERS.containsKey(parts[0])) {
-            throw new BusinessException(400, "不支持的排序: " + sort
-                    + "，可选字段: score, price, star, update_time, create_time");
-        }
-        SolrQuery.ORDER order = parts.length == 2
-                ? parseOrder(parts[1], sort)
-                : SORT_ORDERS.get(parts[0]);
-        return SolrQuery.SortClause.create(parts[0], order);
     }
 
-    private SolrQuery.ORDER parseOrder(String value, String rawSort) {
-        if ("asc".equals(value)) {
-            return SolrQuery.ORDER.asc;
+    private SolrQuery.ORDER resolveOrder(HotelRpQueryReq q, SolrQuery.ORDER defaultOrder) {
+        if (q.getSortOrder() == null) {
+            return defaultOrder;
         }
-        if ("desc".equals(value)) {
-            return SolrQuery.ORDER.desc;
-        }
-        throw new BusinessException(400, "不支持的排序: " + rawSort + "，方向只能是 asc 或 desc");
+        return q.getSortOrder() == SortOrder.DESC ? SolrQuery.ORDER.desc : SolrQuery.ORDER.asc;
+    }
+
+    private boolean hasLocation(HotelRpQueryReq q) {
+        HotelRpQueryReq.LocationReq location = q.getLocation();
+        return location != null && location.getLat() != null && location.getLon() != null;
+    }
+
+    private String priceSortField(HotelRpQueryReq q) {
+        int offsetDay = RpByteUtils.calOffsetBaseDate(q.getCheckinDate());
+        int days = q.getDays() < 1 ? 1 : q.getDays();
+        return String.format(SORT_PRICE_FUNCTION, offsetDay, days);
     }
 }

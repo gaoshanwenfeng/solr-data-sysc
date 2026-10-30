@@ -134,7 +134,7 @@ class DataLoaderTest {
                 + "\"rp_prices\":{\"date\":\"2026-10-27\",\"list\":[100,200]}"
                 + "}]}";
 
-        HotelRpDo hotelRpDto = DataLoader.loadClasspath(DataLoader.HOTEL_RP_FILE).get(0);
+        HotelRpDo hotelRpDto = DataLoader.load(stream(json)).get(0);
 
         assertThat(hotelRpDto.getLongitude()).isEqualByComparingTo("121.473701000");
         assertThat(hotelRpDto.getLatitude()).isEqualByComparingTo("31.230416000");
@@ -155,7 +155,7 @@ class DataLoaderTest {
                 + "\"star_rate\":\"not-a-number\""
                 + "}]}";
 
-        HotelRpDo hotelRpDto = DataLoader.loadClasspath(DataLoader.HOTEL_RP_FILE).get(0);
+        HotelRpDo hotelRpDto = DataLoader.load(stream(json)).get(0);
 
         assertThat(hotelRpDto.getLongitude()).isNull();
         assertThat(hotelRpDto.getLatitude()).isNull();

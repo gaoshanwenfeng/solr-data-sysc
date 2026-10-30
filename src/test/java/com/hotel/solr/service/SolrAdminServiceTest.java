@@ -55,8 +55,8 @@ class SolrAdminServiceTest {
         assertThat(status.getStatus()).isEqualTo("UP");
         assertThat(status.getDocumentCount()).isEqualTo(42);
         assertThat(status.getElapsedTimeMs()).isEqualTo(7);
-        assertThat(status.getCore()).isEqualTo("hotel");
-        assertThat(status.getSolrUrl()).isEqualTo("http://localhost:8983/solr/hotel");
+        assertThat(status.getCore()).isEqualTo("hotel_rp");
+        assertThat(status.getSolrUrl()).isEqualTo("http://localhost:8983/solr/hotel_rp");
     }
 
     @Test
@@ -68,7 +68,7 @@ class SolrAdminServiceTest {
 
         assertThat(status.getStatus()).isEqualTo("DOWN");
         assertThat(status.getMessage()).contains("connection refused");
-        assertThat(status.getCore()).isEqualTo("hotel");
+        assertThat(status.getCore()).isEqualTo("hotel_rp");
     }
 
     @Test

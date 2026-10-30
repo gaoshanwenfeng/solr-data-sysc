@@ -3,44 +3,27 @@ package com.hotel.solr.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hotel.solr.model.po.HotelRpDo;
 import com.hotel.solr.util.DataLoader;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@SpringBootTest
-@ExtendWith(SpringExtension.class)
-@DisplayName("HotelBaseDataLoader 基础数据读取与转换")
+@DisplayName("DataLoader 基础数据读取与转换")
 class RpBytesUtilsTest {
 
-    @Autowired
-    private DataLoader loader;
-
-    private List<HotelRpDo> hotels;
-
-    void loadHotels() {
-        ObjectMapper objectMapper = new ObjectMapper();
-        DataLoader loader = new DataLoader(objectMapper);
-        hotels = loader.loadDefault();
+    @BeforeEach
+    void setUp() {
+        new DataLoader(new ObjectMapper());
     }
 
-
-
-
-
     @Test
-    void getHotel() {
-        String id = "";
-        HotelRpDo hotel = null;
-        for (HotelRpDo h: hotels) {
+    void loadsHotelsFromClasspath() {
+        List<HotelRpDo> hotels = DataLoader.loadClasspath(DataLoader.HOTEL_RP_FILE);
 
-        }
+        assertThat(hotels).isNotEmpty();
+        assertThat(hotels.get(0).getId()).isNotBlank();
     }
 }

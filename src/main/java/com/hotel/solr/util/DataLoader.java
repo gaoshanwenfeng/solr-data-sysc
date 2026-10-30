@@ -157,13 +157,13 @@ public class DataLoader {
     }
 
     private static CoordinatePair resolveCoordinates(HotelInfoRecordBo record) {
-        CoordinatePair baidu = parseCoordinatePair(record.getBaiduLat(), record.getBaiduLon());
-        if(baidu != null) {
-            return baidu;
-        }
         CoordinatePair google = parseCoordinatePair(record.getGoogleLat(), record.getGoogleLon());
         if (google != null) {
             return google;
+        }
+        CoordinatePair baidu = parseCoordinatePair(record.getBaiduLat(), record.getBaiduLon());
+        if (baidu != null) {
+            return baidu;
         }
         return CoordinatePair.EMPTY;
     }

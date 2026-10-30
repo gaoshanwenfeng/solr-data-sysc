@@ -1,6 +1,8 @@
 package com.hotel.solr.model.req;
 
 
+import com.hotel.solr.model.enums.SortOrder;
+import com.hotel.solr.model.enums.SortType;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -35,7 +37,17 @@ public class HotelRpQueryReq {
 
     private List<String> tags;
 
-    private String sort = "score desc";
+    /**
+     * 排序类型：DISTANCE（距离）、PRICE（价格）、STAR（星级）、SCORE（相关度评分）。
+     * 未指定时，携带 location 按距离排序，否则按评分排序。
+     */
+    private SortType sortType;
+
+    /**
+     * 排序方向：ASC（升序）、DESC（降序），仅对 PRICE 和 STAR 生效。
+     * PRICE 默认 ASC；STAR 默认 DESC。
+     */
+    private SortOrder sortOrder;
 
     private Integer page = 1;
 
