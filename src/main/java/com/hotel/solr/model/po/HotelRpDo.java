@@ -1,6 +1,9 @@
 package com.hotel.solr.model.po;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.*;
 import java.math.BigDecimal;
@@ -9,6 +12,7 @@ import java.util.List;
 
 /**
  * 酒店文档。JSON 字段全局使用 camelCase，与 Java 字段名保持一致。
+ *
  * @author gaofeng
  */
 @Data
@@ -61,7 +65,7 @@ public class HotelRpDo {
     /**
      * 房型房态，{@code RpByteUtils} 编码后的紧凑字符串
      */
-    private  String ratePlanRoomSts;
+    private String ratePlanRoomSts;
 
     private Instant createTime;
 

@@ -1,9 +1,8 @@
 package com.hotel.solr.service;
 
 import com.hotel.solr.config.SolrProperties;
-import com.hotel.solr.model.dto.SolrCoreStatusDto;
 import com.hotel.solr.framework.exception.BusinessException;
-import com.hotel.solr.util.DataLoader;
+import com.hotel.solr.model.dto.SolrCoreStatusDto;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrQuery;

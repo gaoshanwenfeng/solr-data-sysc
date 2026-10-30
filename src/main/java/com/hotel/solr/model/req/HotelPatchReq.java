@@ -1,15 +1,12 @@
 package com.hotel.solr.model.req;
 
-import javax.validation.constraints.DecimalMax;
-import javax.validation.constraints.DecimalMin;
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.math.BigDecimal;
 import java.util.List;
 
 /**
  * 部分更新请求，字段为 null 表示不修改。
+ *
  * @author gaofeng
  */
 public class HotelPatchReq {

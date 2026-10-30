@@ -6,7 +6,10 @@ import com.hotel.solr.model.enums.SortType;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.validation.constraints.*;
+import javax.validation.constraints.DecimalMax;
+import javax.validation.constraints.DecimalMin;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Pattern;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -57,7 +60,9 @@ public class HotelRpQueryReq {
 
     private String hotelId;
 
-    /**计算得出**/
+    /**
+     * 计算得出
+     **/
     private LocalDate checkinDate;
     private int offSetCheckin;
     private LocalDate checkoutDate;

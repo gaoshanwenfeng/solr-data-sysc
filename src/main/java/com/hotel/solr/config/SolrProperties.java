@@ -15,7 +15,7 @@ public class SolrProperties {
     /**
      * core 名称，例如 hotel
      */
-    private String core = "hotel";
+    private String core = "hotel_rp";
 
     private int connectionTimeoutMs = 5000;
 

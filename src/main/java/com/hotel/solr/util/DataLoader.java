@@ -1,12 +1,12 @@
 package com.hotel.solr.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.hotel.solr.model.bo.HotelRpDataSetBo;
-import com.hotel.solr.model.bo.HotelInfoRecordBo;
-import com.hotel.solr.model.dto.HotelRpDto;
-import com.hotel.solr.model.bo.RatePlanDataBo;
-import com.hotel.solr.model.po.HotelRpDo;
 import com.hotel.solr.framework.util.RpByteUtils;
+import com.hotel.solr.model.bo.HotelInfoRecordBo;
+import com.hotel.solr.model.bo.HotelRpDataSetBo;
+import com.hotel.solr.model.bo.RatePlanDataBo;
+import com.hotel.solr.model.dto.HotelRpDto;
+import com.hotel.solr.model.po.HotelRpDo;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
  *   <li>rp_prices / rp_room_sts 使用 {@link RpByteUtils} 编码为紧凑字符串；</li>
  *   <li>其余字段保留在 {@link HotelInfoRecordBo} 中，不写入 HotelDo。</li>
  * </ul>
+ *
  * @author gaofeng
  */
 public class DataLoader {
@@ -180,7 +181,7 @@ public class DataLoader {
         return new CoordinatePair(padScale(longitude), padScale(latitude));
     }
 
-    private static  boolean isMissing(BigDecimal latitude, BigDecimal longitude) {
+    private static boolean isMissing(BigDecimal latitude, BigDecimal longitude) {
         return latitude.compareTo(MISSING_COORDINATE) == 0
                 && longitude.compareTo(MISSING_COORDINATE) == 0;
     }

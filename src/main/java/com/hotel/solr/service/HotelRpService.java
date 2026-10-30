@@ -17,17 +17,17 @@ import java.util.List;
  */
 @Service
 public class HotelRpService extends AbstractSolrService {
-    @Override
-    public void initCoreData() {
-        List<HotelRpDo> hotels = DataLoader.loadClasspath(DataLoader.HOTEL_RP_FILE);
-        for(HotelRpDo h : hotels) {
-            create(h);
-        }
-    }
-
     public HotelRpService(@Qualifier("hotelSolrCoreClient") SolrClient solrClient,
                           SolrProperties properties,
                           HotelQueryBuilder queryBuilder) {
         super(solrClient, properties, queryBuilder);
+    }
+
+    @Override
+    public void initCoreData() {
+        List<HotelRpDo> hotels = DataLoader.loadClasspath(DataLoader.HOTEL_RP_FILE);
+        for (HotelRpDo h : hotels) {
+            create(h);
+        }
     }
 }

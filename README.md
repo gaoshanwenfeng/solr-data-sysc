@@ -47,14 +47,31 @@
 │       └── solrconfig.xml                  # 基于 Solr 8.0.0 _default 调整
 └── scripts/
     ├── deploy-core.sh                      # 单 core 配置部署（默认 core=hotel）
-    └── init-solr.sh                        # 旧版 Schema API 初始化（字段模型已过期）
+    └── init-solr.sh                        # Schema API 字段初始化（默认 hotel_rp）
 ```
 
 ## 环境要求
 
 - JDK 8（`java -version` 确认为 1.8）；
-- Solr 8.0.0，standalone 模式，默认端口 `8983`；
+- Solr 8.0.0，standalone 模式；
 - 可访问 Maven 仓库（项目已配置 mavenLocal、阿里云、腾讯云镜像）。
+
+### 环境变量约定
+
+下文命令统一使用以下变量，请按实际环境设置：
+
+| 变量 | 说明 |
+| --- | --- |
+| `SOLR_HOME` | Solr 8.0.0 安装目录 |
+| `SOLR_URL` | Solr 访问地址，格式为 `http://<solr-host>:<port>/solr` |
+| `APP_URL` | 应用访问地址，格式为 `http://<app-host>:<port>` |
+
+```bash
+# 以下为示例值，请按实际环境替换
+export SOLR_HOME=/opt/solr-8.0.0
+export SOLR_URL=http://solr.example.com:8983/solr
+export APP_URL=http://app.example.com:9010
+```
 
 ## 一、安装 Solr
 
@@ -62,14 +79,14 @@
 # 1. 下载并解压（也可使用已有的 Solr 8.0.0 安装包）
 wget https://archive.apache.org/dist/lucene/solr/8.0.0/solr-8.0.0.tgz
 tar -xzf solr-8.0.0.tgz
-export SOLR_HOME=/path/to/solr-8.0.0
+export SOLR_HOME=/opt/solr-8.0.0   # 按实际安装目录修改
 
-# 2. 启动
+# 2. 启动（端口按实际环境调整）
 $SOLR_HOME/bin/solr start -p 8983
 
 # 3. 确认进程与端口
 $SOLR_HOME/bin/solr status
-curl -s 'http://localhost:8983/solr/admin/info/system?wt=json' | head -c 200
+curl -s "$SOLR_URL/admin/info/system?wt=json" | head -c 200
 ```
 
 Solr 8.0.0 要求 Java 8 及以上；如果机器上有多个 JDK，请确认 `JAVA_HOME` 指向 JDK 8。
@@ -96,14 +113,14 @@ $SOLR_HOME/bin/solr restart
 验证分词效果（需 core 已创建）：
 
 ```bash
-curl -s -G 'http://localhost:8983/solr/hotel_rp/analysis/field' \
+curl -s -G "$SOLR_URL/hotel_rp/analysis/field" \
   --data-urlencode 'analysis.fieldtype=text_ik' \
   --data-urlencode 'analysis.fieldvalue=上海外滩华尔道夫酒店' \
   --data-urlencode 'wt=json' | jq .
 ```
 
 如果无法访问 Maven Central，可替换为阿里云 / 腾讯云镜像地址，或从本地 Maven 仓库
-`~/.m2/repository/com/github/magese/ik-analyzer/8.0.0/` 直接复制。
+`com/github/magese/ik-analyzer/8.0.0/` 目录直接复制。
 
 ## 三、部署自定义解析组件（Solr ValueSource 插件）
 
@@ -129,8 +146,9 @@ curl -s -G 'http://localhost:8983/solr/hotel_rp/analysis/field' \
 
 参考源码地址 https://github.com/gaoshanwenfeng/solr-extend-rate-plan
 
+在 `solr-extend-rate-plan` 仓库根目录执行：
+
 ```bash
-cd /path/to/solr-extend-rate-plan
 ./gradlew clean build
 
 # 产物
@@ -181,11 +199,11 @@ done
 
 ```bash
 # 查看函数是否注册
-curl -s 'http://localhost:8983/solr/hotel_rp/config?wt=json' \
+curl -s "$SOLR_URL/hotel_rp/config?wt=json" \
   | jq '.config.valueSourceParser'
 
 # 直接计算某条文档的价格（20758 = 2026-11-01，1 晚）
-curl -s -G 'http://localhost:8983/solr/hotel_rp/select' \
+curl -s -G "$SOLR_URL/hotel_rp/select" \
   --data-urlencode 'q=*:*' \
   --data-urlencode 'rows=1' \
   --data-urlencode 'fl=hotel_id,rate_plan_prices,fq_rp_prices(rate_plan_prices,20758,1)' \
@@ -223,8 +241,8 @@ bytes[12..15] 第 2 个数值
 ### 4.2 创建并部署配置
 
 ```bash
-export SOLR_HOME=/path/to/solr-8.0.0
-cd /path/to/solr-data-sysc
+export SOLR_HOME=/opt/solr-8.0.0   # 按实际安装目录修改
+# 在项目根目录执行
 
 # 1. 创建两个 core（默认使用 _default configset；已存在则跳过）
 $SOLR_HOME/bin/solr create -c hotel_rp
@@ -251,36 +269,36 @@ $SOLR_HOME/bin/solr restart
 - `scripts/deploy-core.sh` 只处理单个 core（`SOLR_CORE`，源目录 `solr/$CORE`，默认
   `hotel`），与当前双 core 结构不匹配，首次使用前还必须先创建 core。推荐按上面的命令
   手动复制配置；
-- `scripts/init-solr.sh` 的字段模型仍是旧版（`city` / `longitude` / `latitude` / `price`），
-  不要用于当前 core。
+- `scripts/init-solr.sh` 已按当前 `managed-schema` 更新业务字段模型，默认初始化 `hotel_rp`；
+  初始化价格计划 core 时执行 `SOLR_CORE=hotel_rps_core ./scripts/init-solr.sh`。core 不存在
+  时会用 `_default` configset 创建，旧脚本遗留的 `city` 等字段不会自动删除；脚本只通过
+  Schema API 补字段，不修改 `solrconfig.xml`，自定义函数仍需按 3.4 节注册。
 
 ### 4.3 应用配置
 
-`src/main/resources/application.yml`：
+应用配置位于 `src/main/resources/application.yml`，主要配置项如下：
 
-```yaml
-server:
-  port: 9010
+| 配置项 | 说明 |
+| --- | --- |
+| `server.port` | 应用监听端口，按部署环境设置 |
+| `solr.base-url` | Solr 服务地址（standalone），按实际环境修改 |
+| `solr.connection-timeout-ms` / `solr.socket-timeout-ms` | 连接 / 读取超时（毫秒） |
+| `solr.commit-after-write` | 写操作后是否立即 commit，保证读己之写 |
+| `solr.core` | 可选，仅用于健康检查响应中的 `core` 字段展示，不参与实际路由 |
 
-solr:
-  base-url: http://localhost:8983/solr   # 按实际环境修改
-  connection-timeout-ms: 5000
-  socket-timeout-ms: 15000
-  commit-after-write: true               # 写后立即 commit，保证读己之写
-```
-
-`solr.core` 只用于健康检查响应中的 `core` 字段展示，不参与实际路由。
+具体取值以 `application.yml` 为准，部署时通过环境变量或配置中心覆盖。`solr.core` 未在
+yml 中显式配置时，使用 `SolrProperties` 中的默认值。
 
 ### 4.4 验证
 
 ```bash
 # core 应为 loaded 状态
-curl -s 'http://localhost:8983/solr/admin/cores?action=STATUS&core=hotel_rp&wt=json' | jq .
-curl -s 'http://localhost:8983/solr/admin/cores?action=STATUS&core=hotel_rps_core&wt=json' | jq .
+curl -s "$SOLR_URL/admin/cores?action=STATUS&core=hotel_rp&wt=json" | jq .
+curl -s "$SOLR_URL/admin/cores?action=STATUS&core=hotel_rps_core&wt=json" | jq .
 
 # 字段与 IK 类型
-curl -s 'http://localhost:8983/solr/hotel_rp/schema/fields' | jq -r '.fields[].name'
-curl -s 'http://localhost:8983/solr/hotel_rp/schema/fieldtypes/text_ik' | jq .
+curl -s "$SOLR_URL/hotel_rp/schema/fields" | jq -r '.fields[].name'
+curl -s "$SOLR_URL/hotel_rp/schema/fieldtypes/text_ik" | jq .
 ```
 
 ## 五、导入数据
@@ -319,10 +337,10 @@ Solr：
 
 ```bash
 # 导入酒店主数据 -> hotel_rp
-curl -X POST 'http://127.0.0.1:9010/api/hotels/import'
+curl -X POST "$APP_URL/api/hotels/import"
 
 # 导入价格计划数据 -> hotel_rps_core
-curl -X POST 'http://127.0.0.1:9010/api/rp/import'
+curl -X POST "$APP_URL/api/rp/import"
 ```
 
 导入逻辑写在两个 Service 的 `initCoreData()` 中：逐条调用 `create()`，相同的 `id` 会覆盖
@@ -331,12 +349,12 @@ curl -X POST 'http://127.0.0.1:9010/api/rp/import'
 ### 5.3 验证
 
 ```bash
-curl -s 'http://127.0.0.1:9010/api/solr/health' | jq .
+curl -s "$APP_URL/api/solr/health" | jq .
 
-curl -s 'http://localhost:8983/solr/hotel_rp/select?q=*:*&rows=0&wt=json' \
+curl -s "$SOLR_URL/hotel_rp/select?q=*:*&rows=0&wt=json" \
   | jq '.response.numFound'          # 期望 17
 
-curl -s 'http://localhost:8983/solr/hotel_rps_core/select?q=*:*&rows=0&wt=json' \
+curl -s "$SOLR_URL/hotel_rps_core/select?q=*:*&rows=0&wt=json" \
   | jq '.response.numFound'          # 期望 9
 ```
 
@@ -414,62 +432,62 @@ curl -s 'http://localhost:8983/solr/hotel_rps_core/select?q=*:*&rows=0&wt=json' 
 
 ```bash
 # 1. 城市 + 日期范围
-curl -X POST 'http://127.0.0.1:9010/api/hotels/query' \
+curl -X POST "$APP_URL/api/hotels/query" \
   -H 'Content-Type: application/json' \
   -d '{"cityId":"0301","checkin":"2026-11-01","checkout":"2026-11-02"}'
 
 # 2. 关键字检索
-curl -X POST 'http://127.0.0.1:9010/api/hotels/query' \
+curl -X POST "$APP_URL/api/hotels/query" \
   -H 'Content-Type: application/json' \
   -d '{"cityId":"0301","checkin":"2026-11-01","checkout":"2026-11-02","keyword":"酒店"}'
 
 # 3. 价格区间 + 房态过滤
-curl -X POST 'http://127.0.0.1:9010/api/hotels/query' \
+curl -X POST "$APP_URL/api/hotels/query" \
   -H 'Content-Type: application/json' \
   -d '{"cityId":"0301","checkin":"2026-11-01","checkout":"2026-11-02","priceFrom":10,"priceTo":500}'
 
 # 4. 地理位置：默认按距离由近到远
-curl -X POST 'http://127.0.0.1:9010/api/hotels/query' \
+curl -X POST "$APP_URL/api/hotels/query" \
   -H 'Content-Type: application/json' \
   -d '{"cityId":"0301","checkin":"2026-11-01","checkout":"2026-11-02","location":{"lat":39.073851,"lon":117.365759,"distance":20.0}}'
 
 # 5. 价格升序 / 降序
-curl -X POST 'http://127.0.0.1:9010/api/hotels/query' \
+curl -X POST "$APP_URL/api/hotels/query" \
   -H 'Content-Type: application/json' \
   -d '{"cityId":"0301","checkin":"2026-11-01","checkout":"2026-11-02","sortType":"PRICE"}'
 
-curl -X POST 'http://127.0.0.1:9010/api/hotels/query' \
+curl -X POST "$APP_URL/api/hotels/query" \
   -H 'Content-Type: application/json' \
   -d '{"cityId":"0301","checkin":"2026-11-01","checkout":"2026-11-02","sortType":"PRICE","sortOrder":"DESC"}'
 
 # 6. 星级高到低 / 低到高
-curl -X POST 'http://127.0.0.1:9010/api/hotels/query' \
+curl -X POST "$APP_URL/api/hotels/query" \
   -H 'Content-Type: application/json' \
   -d '{"cityId":"0301","checkin":"2026-11-01","checkout":"2026-11-02","sortType":"STAR"}'
 
-curl -X POST 'http://127.0.0.1:9010/api/hotels/query' \
+curl -X POST "$APP_URL/api/hotels/query" \
   -H 'Content-Type: application/json' \
   -d '{"cityId":"0301","checkin":"2026-11-01","checkout":"2026-11-02","sortType":"STAR","sortOrder":"ASC"}'
 
 # 7. 错误用例：距离排序但未提供 location -> 400
-curl -X POST 'http://127.0.0.1:9010/api/hotels/query' \
+curl -X POST "$APP_URL/api/hotels/query" \
   -H 'Content-Type: application/json' \
   -d '{"cityId":"0301","checkin":"2026-11-01","checkout":"2026-11-02","sortType":"DISTANCE"}'
 
 # 8. 分组查询：total 为酒店分组数
-curl -X POST 'http://127.0.0.1:9010/api/rp/query' \
+curl -X POST "$APP_URL/api/rp/query" \
   -H 'Content-Type: application/json' \
   -d '{"cityId":"0301","checkin":"2026-10-27","checkout":"2026-10-28","priceFrom":10,"priceTo":500}'
 
 # 9. 详情、批量、运维
-curl -X GET 'http://127.0.0.1:9010/api/hotels/53876'
-curl -X POST 'http://127.0.0.1:9010/api/hotels/batch' \
+curl -X GET "$APP_URL/api/hotels/53876"
+curl -X POST "$APP_URL/api/hotels/batch" \
   -H 'Content-Type: application/json' \
   -d '{"hotels":[{"id":"h1","name":"酒店1"},{"id":"h2","name":"酒店2"}]}'
-curl -X POST 'http://127.0.0.1:9010/api/hotels/batch-delete' \
+curl -X POST "$APP_URL/api/hotels/batch-delete" \
   -H 'Content-Type: application/json' \
   -d '{"ids":["h1","h2"]}'
-curl -X POST 'http://127.0.0.1:9010/api/solr/commit'
+curl -X POST "$APP_URL/api/solr/commit"
 ```
 
 ### 6.5 单元测试
@@ -506,19 +524,15 @@ curl -X POST 'http://127.0.0.1:9010/api/solr/commit'
 
 ## 七、遗留问题
 
-| # | 问题 | 影响与建议 |
-| --- | --- | --- |
-| 1 | 自定义函数插件不在本仓库 | 修改插件后必须重新 `./gradlew build`、替换 jar 并重启 Solr；同名类多版本共存时生效版本不确定，升级时移出旧 jar |
-| 2 | 仓库内 `solr/hotel/conf/solrconfig.xml` 没有注册 `fq_rp_prices` / `fq_rp_sts` | 当前可用环境是手工注册的；用脚本覆盖 `conf` 后查询 / 排序会报未定义函数，部署后需按 3.4 节补注册 |
-| 3 | `scripts/install-ik.sh` 已被删除，但 `deploy-core.sh` / `init-solr.sh` 仍引用它 | 按第二节手工下载并安装 IK；相关脚本提示文字会误导 |
-| 4 | `deploy-core.sh` 与双 core 不匹配 | 脚本源目录固定为 `solr/$CORE`（默认 `solr/hotel`），且仓库内没有 `solr/hotel/core.properties`；当前应用使用 `hotel_rp` / `hotel_rps_core`，推荐手动复制 `conf` |
-| 5 | `init-solr.sh` 字段模型过期 | 仍创建 `city` / `longitude` / `latitude` / `price`，与 `managed-schema`（`city_id` / `location` / `hotel_id` / `rate_plan_id`）不一致，不要用于当前 core |
-| 6 | `solr/schema.json` 是早期参考 | 字段已与 `managed-schema` 不一致，以 `solr/hotel/conf/managed-schema` 为准 |
-| 7 | 健康检查的 core 名不一致 | `SolrAdminService` 访问 `hotel_rp`，但响应中的 `core` 取自 `solr.core`（默认 `hotel`）；且不检查 `hotel_rps_core` |
-| 8 | 导入逐条写入并逐条 commit | `initCoreData()` 对每条记录调用 `create()`，`commit-after-write=true` 时产生 N 次 commit；数据量大时建议改为批量写入后统一 commit |
-| 9 | 重复导入不会清理旧数据 | 相同 `id` 覆盖，源数据中已删除的文档会残留；需要全量重建时先清空 core（删索引后重新导入） |
-| 10 | 分组查询语义与普通分页不同 | `/api/rp/query` 的 `total` 是酒店分组数，`start` / `rows` 作用于分组，每组只返回一条代表文档；前端不能按文档总数理解 |
-| 11 | 价格排序对无价格文档不友好 | 函数在数据缺失、价格为 0 或入住区间超出计划时返回 0，升序排序会把这些文档排在最前；建议同时使用价格区间过滤或由前端过滤 |
-| 12 | `HotelRpDto.price` 没有赋值 | 转换器只填充 `priceList` 和 `avgPrice`，`price` 恒为 `null`；接口文档中不应依赖该字段 |
-| 13 | 测试命名与自动化覆盖不足 | `RpBytesUtilsTest` 实际内容为 DataLoader 测试；没有连接真实 Solr 的自动化集成测试，当前端到端验证依赖第 6.4 节的 curl 用例 |
-| 14 | 核心名称硬编码、接口无鉴权 | `hotel_rp` / `hotel_rps_core` 写死在 `SolrProperties`；接口没有认证、限流，仅适合内网或网关之后部署 |
+| # | 问题 | 影响与建议                                                                                                                                   |
+| --- | --- |-----------------------------------------------------------------------------------------------------------------------------------------|
+| 1 | 自定义函数插件不在本仓库 | 修改插件后必须重新 `./gradlew build`、替换 jar 并重启 Solr；同名类多版本共存时生效版本不确定，升级时移出旧 jar                                                                                                                                 |
+| 2 | 仓库内 `solr/hotel/conf/solrconfig.xml` 没有注册 `fq_rp_prices` / `fq_rp_sts` | 当前可用环境是手工注册的；用脚本覆盖 `conf` 后查询 / 排序会报未定义函数，部署后需按 3.4 节补注册                                                                                |
+| 3 | `scripts/install-ik.sh` 已被删除，但 `deploy-core.sh` 仍引用它 | 按第二节手工下载并安装 IK；脚本提示文字会误导                                                                                                              |
+| 4 | `deploy-core.sh` 与双 core 不匹配 | 脚本源目录固定为 `solr/$CORE`（默认 `solr/hotel`），且仓库内没有 `solr/hotel/core.properties`；当前应用使用 `hotel_rp` / `hotel_rps_core`，推荐手动复制 `conf`           |
+| 5 | `solr/schema.json` 是早期参考 | 字段已与 `managed-schema` 不一致，以 `solr/hotel/conf/managed-schema` 为准                                                                         |
+| 8 | 重复导入不会清理旧数据 | 相同 `id` 覆盖，源数据中已删除的文档会残留；需要全量重建时先清空 core（删索引后重新导入）                                                                                      |
+| 9 | 分组查询语义与普通分页不同 | `/api/rp/query` 的 `total` 是酒店分组数，`start` / `rows` 作用于分组，每组只返回一条代表文档；前端不能按文档总数理解                                                         |
+| 10 | 价格排序对无价格文档不友好 | 函数在数据缺失、价格为 0 或入住区间超出计划时返回 0，升序排序会把这些文档排在最前；建议同时使用价格区间过滤或由前端过滤                                                                          |
+| 11 | 测试命名与自动化覆盖不足 | `RpBytesUtilsTest` 实际内容为 DataLoader 测试；没有连接真实 Solr 的自动化集成测试，当前端到端验证依赖第 6.4 节的 curl 用例 |
+| 12 | 核心名称硬编码、接口无鉴权 | `hotel_rp` / `hotel_rps_core` 写死在 `SolrProperties`；接口没有认证、限流，仅适合内网或网关之后部署 |

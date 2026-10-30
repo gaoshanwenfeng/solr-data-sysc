@@ -16,7 +16,8 @@ import org.springframework.util.StringUtils;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -27,18 +28,14 @@ import java.util.stream.Collectors;
 @Slf4j
 @Component
 public class HotelQueryBuilder {
-    private Logger logger = LoggerFactory.getLogger(HotelQueryBuilder.class);
-
     private static final int DEFAULT_PAGE_SIZE = 10;
     private static final int MAX_PAGE_SIZE = 200;
-
     private static final String DISTANCE_SORT_FIELD = "geodist()";
     private static final String SCORE_SORT_FIELD = "score";
     /**
      * 排序表达式中的函数不能带空格：sort 参数用逗号分隔多个排序子句。
      */
     private static final String SORT_PRICE_FUNCTION = "fq_rp_prices(rate_plan_prices,%d,%d)";
-
     final String TEMPLATE_FILTER_QUERY_PRICE = "{!frange l=%d u=%d}fq_rp_prices(rate_plan_prices, %d, %d)";
     final String TEMPLATE_FILTER_QUERY_ROOM_STS = "{!frange l=%d}fq_rp_sts(rate_plan_room_sts, %d, %d)";
     /**
@@ -47,6 +44,7 @@ public class HotelQueryBuilder {
     final String FUNCTION_PRICE = "fq_rp_prices(rate_plan_prices, %d, %d)";
     final String FUNCTION_ROOM_STS = "fq_rp_sts(rate_plan_room_sts, %d, %d)";
     final String COMMON_FIELD_LIST = "id,hotel_id,rate_plan_id,name,address,city_id,location,city_name,star,rate_plan_prices,rate_plan_room_sts,create_time,update_time";
+    private Logger logger = LoggerFactory.getLogger(HotelQueryBuilder.class);
 
     private static String toLocationStr(HotelRpQueryReq.LocationReq location) {
         if (location.getLat() == null || location.getLon() == null) {
